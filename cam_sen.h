@@ -4,6 +4,8 @@
 #include "global.h"
 #include "soptopcamera.h"
 
+class my_parameters;
+
 class Cam_Sen
 {
 public:

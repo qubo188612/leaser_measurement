@@ -6,7 +6,6 @@ leaser_showpointdlg::leaser_showpointdlg(QWidget *parent) :
     ui(new Ui::leaser_showpointdlg)
 {
     ui->setupUi(this);
-
 }
 
 leaser_showpointdlg::~leaser_showpointdlg()
@@ -36,8 +35,6 @@ void leaser_showpointdlg::showpoint(std::string filename)
         QImage img = QImage((const uchar*)m_srcImage.data, m_srcImage.cols, m_srcImage.rows,
         m_srcImage.cols * m_srcImage.channels(), format);
         ui->label->clear();
-        int m_nImgWidth = m_srcImage.cols;//图像宽
-        int m_nImgHeight = m_srcImage.rows;//图像高
         QPixmap pixmap = QPixmap::fromImage(img);
         pixmap = pixmap.scaled(ui->label->size());
         ui->label->setAutoFillBackground(true);

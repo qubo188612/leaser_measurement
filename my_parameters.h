@@ -2,6 +2,10 @@
 #define MY_PARAMETERS_H
 #include <opencv2/opencv.hpp>
 #include "cam_sen.h"
+#include "soptopcamera.h"
+
+class Cam_Sen;
+class SoptopCamera;
 
 class my_parameters
 {

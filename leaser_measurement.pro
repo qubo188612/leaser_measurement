@@ -40,3 +40,9 @@ HEADERS += \
 INCLUDEPATH += /usr/local/OpenCV/Release/include/opencv4 \
 
 LIBS += /usr/local/OpenCV/Release/lib/libopencv_*
+
+#ROS库添加
+INCLUDEPATH +="/opt/ros/galactic/include" \
+
+LIBS += /opt/ros/galactic/lib/lib*.so
+LIBS += /opt/ros/galactic/lib/x86_64-linux-gnu/lib*.so
