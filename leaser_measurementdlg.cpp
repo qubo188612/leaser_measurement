@@ -200,7 +200,7 @@ void ImgWindowShowThread::run()
             if(_p->m_mcs->cam->sop_cam[0].cv_image->empty()==0)
             {
             //运行算法
-               cv::Mat imageOut;
+
                _p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
                _p->Cam_Mem_Updata(_p->pImage.rows,_p->pImage.cols);
                switch(_p->m_mcs->e2proomdata.measurementDlg_leaser_data_mod)
@@ -209,7 +209,8 @@ void ImgWindowShowThread::run()
                   break;
                   case 1:   //显示轮廓
                   {
-                      _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,true);
+                      cv::Mat imageOut,cv_dlinecenter;
+                      _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&cv_dlinecenter,true);
                       _p->int_show_image_inlab(imageOut);
                   }
                   break;

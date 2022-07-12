@@ -13,7 +13,7 @@ public:
     void Init_algMem(Int32 nHeight,Int32 nWidth);
     void Free_algMem();
 
-    Int8 alg1_leasercenter(cv::Mat cv_pImage,cv::Mat *cv_pImageOut,bool show=false);//求激光中线
+    Int8 alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_dlinecenter,bool show=false);//求激光中线
 
 protected:
     my_parameters *m_para;
