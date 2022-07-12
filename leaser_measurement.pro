@@ -12,12 +12,17 @@ QT       += core gui network
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        E2proomData.cpp \
+        FileOut.cpp \
+        algorithm.cpp \
         cam_sen.cpp \
         leaser_measurementdlg.cpp \
         leaser_showpointdlg.cpp \
         main.cpp \
         my_parameters.cpp \
         soptopcamera.cpp
+
+SOURCES += /home/qubo/Myhalcv2/myhalcv2.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -29,6 +34,9 @@ FORMS += \
     leaser_showpointdlg.ui
 
 HEADERS += \
+    E2proomData.h \
+    FileOut.h \
+    algorithm.h \
     cam_sen.h \
     global.h \
     leaser_measurementdlg.h \
@@ -36,13 +44,20 @@ HEADERS += \
     my_parameters.h \
     soptopcamera.h
 
+HEADERS += /home/qubo/Myhalcv2/myhalcv2.h
+
 #opencv库的添加
 INCLUDEPATH += /usr/local/OpenCV/Release/include/opencv4 \
 
 LIBS += /usr/local/OpenCV/Release/lib/libopencv_*
 
 #ROS库添加
-INCLUDEPATH +="/opt/ros/galactic/include" \
+INCLUDEPATH +=/opt/ros/galactic/include \
 
 LIBS += /opt/ros/galactic/lib/lib*.so
 LIBS += /opt/ros/galactic/lib/x86_64-linux-gnu/lib*.so
+
+#Myhalcv2库添加
+
+INCLUDEPATH +=/home/qubo/Myhalcv2 \
+

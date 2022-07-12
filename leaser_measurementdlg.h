@@ -12,6 +12,13 @@
 #include <my_parameters.h>
 #include "rclcpp/rclcpp.hpp"
 #include <QThread>
+#include <QLabel>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/io.h>
+#include <unistd.h>
+#include <dirent.h>
+#include "algorithm.h"
 
 namespace Ui {
 class leaser_measurementDlg;
@@ -29,17 +36,31 @@ public:
 
     my_parameters *m_mcs;
 
-    void img_windowshow(bool b_show);      //显示图像
+    void img_windowshow(bool b_show,QLabel *lab_show);      //显示图像
 
     Ui::leaser_measurementDlg *ui;
+
+    algorithm *my_alg;//算法
+
+    cv::Mat pImage;//要计算的图像
+
+    void Cam_Mem_Updata(Int32 memHeight,Int32 memWidth);  //内存检测
+
+    bool b_imgshow_thread;      //线程运行标记
+    bool stop_b_imgshow_thread;  //是否成功断开线程
+
+    void int_show_image_inlab(cv::Mat cv_image);        //在windowshowlib中显示cv_image
+
 private:
 
     leaser_showpointdlg showpoint;
 
     ImgWindowShowThread *imgshow_thread;
 
-private slots:
-    void init_send_show_image();
+    void UpdataUi();  //刷新控件显示和使能
+
+    void InitSetEdit(); //初始化控件数字
+
 };
 
 class ImgWindowShowThread : public QThread
@@ -47,14 +68,12 @@ class ImgWindowShowThread : public QThread
     Q_OBJECT
 public:
     ImgWindowShowThread(leaser_measurementDlg *statci_p);
+    void Stop();
 protected:
     void run();
 private:
     leaser_measurementDlg *_p;
 
-signals:
-    // 自定义信号
-    void Send_show_image();
 };
 
 #endif // LEASER_MEASUREMENTDLG_H

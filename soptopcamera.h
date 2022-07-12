@@ -9,6 +9,15 @@
 #include <opencv2/opencv.hpp>
 #include <QObject>
 #include <QThread>
+#include <QLabel>
+#include "FileOut.h"
+
+#define SOPTOPCAM_SAVEBUFF		32
+#define SOPTOPCAM_SYSPATH_MOTO	"./SAVE/SOPTOPCAM.bsd"
+
+#define SOPTOPCAM_EXPOSURE_MAX    20000
+#define SOPTOPCAM_EXPOSURE_USE    800
+#define SOPTOPCAM_EXPOSURE_MIN    0
 
 using std::placeholders::_1;
 class StartCameraThread;
@@ -22,15 +31,30 @@ public:
     int argc;
     char **argv;
 
-    void InitConnect();   //连接相机
+    void InitConnect(QLabel *lab_show);   //连接相机
     void DisConnect();    //断开相机
     bool b_connect;       //是否连接相机
+    bool stop_b_connect;  //是否成功断开相机
+
+    int i32_exposure;         //曝光值
+    int i32_exposure_max;     //曝光最大值
+    int i32_exposure_min;     //曝光最小值
+    int i32_exposure_use;     //曝光默认值
+    void updata_parameter();  //刷新相机参数
 
     cv::Mat *cv_image;    //相机图像
+    QLabel *m_lab_show;   //显示控件位置
+    bool b_pause_show_image_inlab;  //是否暂停显示(但画面还会再后台传输)
 
+    void int_show_image_inlab();//刷新图像
+
+    void write_para();     //保存相机参数
+    void init_para();       //默认参赛
 protected:
     StartCameraThread *StartCamera_thread;
 
+    void read_para();      //读取相机参数
+    void check_para();     //核对相机参数
 };
 
 class StartCameraThread : public QThread
@@ -53,7 +77,6 @@ public:
 
 private:
     SoptopCamera *_p;
-
 public:
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
     void topic_callback(const sensor_msgs::msg::Image msg)  const;

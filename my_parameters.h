@@ -3,6 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include "cam_sen.h"
 #include "soptopcamera.h"
+#include "E2proomData.h"
 
 class Cam_Sen;
 class SoptopCamera;
@@ -13,6 +14,8 @@ public:
     static my_parameters *Get();
 
     Cam_Sen *cam;    //相机
+
+    E2proomData e2proomdata;	//存储的数据
 
 protected:
     my_parameters();

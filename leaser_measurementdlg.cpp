@@ -6,29 +6,38 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::leaser_measurementDlg)
 {
+    std::string dir = "./SAVE";
+    if (access(dir.c_str(), 0) == -1)
+    {
+      mkdir("./SAVE",S_IRWXU);
+    }
     m_mcs=m_mcs->Get();
+    pImage=cv::Mat::zeros(CAMIMAGE_HEIGHT,CAMIMAGE_WIDTH,CV_8UC1);
+
+    my_alg=new algorithm(m_mcs);
 
     ui->setupUi(this);
+    InitSetEdit();
+    UpdataUi();
 
     imgshow_thread = new ImgWindowShowThread(this);
-    connect(imgshow_thread, SIGNAL(Send_show_image()), this, SLOT(init_send_show_image()));
-
+    b_imgshow_thread=true;
     imgshow_thread->start();
 
     connect(ui->connectcamBtn,&QPushButton::clicked,[=](){
        if(m_mcs->cam->sop_cam[0].b_connect==false)
        {
-          img_windowshow(true);
-          ui->connectcamBtn->setText("断开");
+          img_windowshow(true,ui->windowshowlib);
+          UpdataUi();
        }
        else
        {
-         img_windowshow(false);
-         ui->connectcamBtn->setText("连接");
+         img_windowshow(false,ui->windowshowlib);
+         UpdataUi();
        }
     });
 
-    connect(ui->openpointfileBtn,&QPushButton::clicked,[=](){
+    connect(ui->openpointfileBtn,&QPushButton::clicked,[=](){         //连接相机
 
         QString fileName = QFileDialog::getOpenFileName(this, "open Image", "", "Image File(*.bmp *.jpg *.jpeg *.png)");
         QTextCodec* code = QTextCodec::codecForName("gb18030");
@@ -40,18 +49,66 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
             showpoint.showpoint(name);
         }
     });
+
+    connect(ui->write_cam_editBtn,&QPushButton::clicked,[=](){      //设置相机参数
+        m_mcs->cam->sop_cam[0].i32_exposure=ui->exposureEdit->text().toInt();
+        m_mcs->cam->sop_cam[0].updata_parameter();
+        m_mcs->cam->sop_cam[0].write_para();
+    });
+
+    connect(ui->showcamimgBtn,&QPushButton::clicked,[=](){      //显示原图
+        m_mcs->e2proomdata.measurementDlg_leaser_data_mod=0;
+        m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=false;    //显示原图
+    });
+
+    connect(ui->showcontourBtn,&QPushButton::clicked,[=](){      //显示轮廓
+        m_mcs->e2proomdata.measurementDlg_leaser_data_mod=1;
+        m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+    });
+
+    connect(ui->showdeepimgBth,&QPushButton::clicked,[=](){      //显示深度图
+        m_mcs->e2proomdata.measurementDlg_leaser_data_mod=2;
+        m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+    });
+
+    connect(ui->showclouldpointBtn,&QPushButton::clicked,[=](){      //显示点云图
+        m_mcs->e2proomdata.measurementDlg_leaser_data_mod=3;
+        m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+    });
+
 }
 
 leaser_measurementDlg::~leaser_measurementDlg()
 {
+    m_mcs->cam->sop_cam[0].DisConnect();
+    imgshow_thread->Stop();
+    imgshow_thread->quit();
+    imgshow_thread->wait();
+    delete my_alg;
     delete ui;
 }
 
-void leaser_measurementDlg::img_windowshow(bool b_show)
+void leaser_measurementDlg::InitSetEdit()
+{
+    QString msg;
+    QString data_min,data_max;
+    ui->exposureEdit->setText(QString::number(m_mcs->cam->sop_cam[0].i32_exposure));
+    data_min=QString::number(m_mcs->cam->sop_cam[0].i32_exposure_min);
+    data_max=QString::number(m_mcs->cam->sop_cam[0].i32_exposure_max);
+    msg="("+data_min+"-"+data_max+")";
+    ui->label_2->setText(msg);
+}
+
+
+void leaser_measurementDlg::img_windowshow(bool b_show,QLabel *lab_show)
 {
     if(b_show==true)
     {
-        m_mcs->cam->sop_cam[0].InitConnect();
+        if(m_mcs->e2proomdata.measurementDlg_leaser_data_mod==0)
+            m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=false;    //显示原图
+        else
+            m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+        m_mcs->cam->sop_cam[0].InitConnect(lab_show);
     }
     else
     {
@@ -59,12 +116,46 @@ void leaser_measurementDlg::img_windowshow(bool b_show)
     }
 }
 
-void leaser_measurementDlg::init_send_show_image()
+void leaser_measurementDlg::UpdataUi()
 {
-    cv::Mat m_srcImage=(*m_mcs->cam->sop_cam[0].cv_image).clone();
-//  cvtColor(m_srcImage, m_srcImage, cv::COLOR_BGR2RGB);//BGR转化为RGB
+    if(m_mcs->cam->sop_cam[0].b_connect==false)
+    {
+        ui->connectcamBtn->setText("连接");
+        ui->write_cam_editBtn->setEnabled(false);
+    }
+    else
+    {
+        ui->connectcamBtn->setText("断开");
+        ui->write_cam_editBtn->setEnabled(true);
+    }
+}
+
+void leaser_measurementDlg::Cam_Mem_Updata(Int32 memHeight,Int32 memWidth)
+{
+    static Int32 old_memHeight=-1,old_memWidth=-1;
+    static bool b_initMem=false;
+    if(old_memHeight<memHeight||old_memWidth<memWidth)
+    {
+      old_memHeight=memHeight;
+      old_memWidth=memWidth;
+      if(b_initMem==false)
+      {
+        b_initMem=true;
+      }
+      else
+      {
+        Myhalcv2::MyhalcvMemFree();
+        my_alg->Free_algMem();
+      }
+      Myhalcv2::MyhalcvMemInit(memHeight,memWidth);
+      my_alg->Init_algMem(memHeight,memWidth);
+    }
+}
+
+void leaser_measurementDlg::int_show_image_inlab(cv::Mat cv_image)
+{
     QImage::Format format = QImage::Format_RGB888;
-    switch (m_srcImage.type())
+    switch (cv_image.type())
     {
     case CV_8UC1:
       format = QImage::Format_Indexed8;
@@ -76,16 +167,23 @@ void leaser_measurementDlg::init_send_show_image()
       format = QImage::Format_ARGB32;
       break;
     }
-    QImage img = QImage((const uchar*)m_srcImage.data, m_srcImage.cols, m_srcImage.rows,
-    m_srcImage.cols * m_srcImage.channels(), format);
-    ui->label->clear();
-    QPixmap pixmap = QPixmap::fromImage(img);
-    pixmap = pixmap.scaled(ui->label->size());
-    ui->label->setAutoFillBackground(true);
-    QPalette palette;
-    palette.setBrush(ui->label->backgroundRole(), QBrush(pixmap));
-    ui->label->setPalette(palette);
-    ui->label->repaint();
+    QImage img = QImage((const uchar*)cv_image.data, cv_image.cols, cv_image.rows,
+    cv_image.cols * cv_image.channels(), format);
+    img = img.scaled(ui->windowshowlib->width(),ui->windowshowlib->height(),Qt::IgnoreAspectRatio, Qt::SmoothTransformation);//图片自适应lab大小
+    ui->windowshowlib->setPixmap(QPixmap::fromImage(img));
+}
+
+void ImgWindowShowThread::Stop()
+{
+  if(_p->b_imgshow_thread==true)
+  {
+    _p->stop_b_imgshow_thread=false;
+    _p->b_imgshow_thread=false;
+    while (_p->stop_b_imgshow_thread==false)
+    {
+      sleep(0);
+    }
+  }
 }
 
 ImgWindowShowThread::ImgWindowShowThread(leaser_measurementDlg *statci_p)
@@ -97,10 +195,44 @@ void ImgWindowShowThread::run()
 {
     while(1)
     {
-        if(_p->m_mcs->cam->sop_cam[0].cv_image->empty()==0)
+        if(_p->b_imgshow_thread==true)
         {
-            emit Send_show_image();
+            if(_p->m_mcs->cam->sop_cam[0].cv_image->empty()==0)
+            {
+            //运行算法
+               cv::Mat imageOut;
+               _p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
+               _p->Cam_Mem_Updata(_p->pImage.rows,_p->pImage.cols);
+               switch(_p->m_mcs->e2proomdata.measurementDlg_leaser_data_mod)
+               {
+                  case 0:   //显示原图，（不做处理）
+                  break;
+                  case 1:   //显示轮廓
+                  {
+                      _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,true);
+                      _p->int_show_image_inlab(imageOut);
+                  }
+                  break;
+                  case 2:   //显示深度图
+                  {
+
+                  }
+                  break;
+                  case 3:   //显示点云
+                  {
+
+                  }
+                  break;
+                  default:
+                  break;
+               }
+            }
+            sleep(0);
         }
-        sleep(1);
+        else
+        {
+            _p->stop_b_imgshow_thread=true;
+            break;
+        }
     }
 }

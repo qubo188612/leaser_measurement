@@ -34,13 +34,7 @@ void leaser_showpointdlg::showpoint(std::string filename)
         }
         QImage img = QImage((const uchar*)m_srcImage.data, m_srcImage.cols, m_srcImage.rows,
         m_srcImage.cols * m_srcImage.channels(), format);
-        ui->label->clear();
-        QPixmap pixmap = QPixmap::fromImage(img);
-        pixmap = pixmap.scaled(ui->label->size());
-        ui->label->setAutoFillBackground(true);
-        QPalette palette;
-        palette.setBrush(ui->label->backgroundRole(), QBrush(pixmap));
-        ui->label->setPalette(palette);
-        ui->label->repaint();
+        img = img.scaled(ui->label->width(),ui->label->height(),Qt::IgnoreAspectRatio, Qt::SmoothTransformation);//图片自适应lab大小
+        ui->label->setPixmap(QPixmap::fromImage(img));
     }
 }
