@@ -14,6 +14,7 @@ QT       += core gui network
 SOURCES += \
         E2proomData.cpp \
         FileOut.cpp \
+        TimeFunction.cpp \
         algorithm.cpp \
         cam_sen.cpp \
         leaser_measurementdlg.cpp \
@@ -36,6 +37,7 @@ FORMS += \
 HEADERS += \
     E2proomData.h \
     FileOut.h \
+    TimeFunction.h \
     algorithm.h \
     cam_sen.h \
     global.h \

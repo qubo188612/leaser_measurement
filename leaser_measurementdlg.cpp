@@ -11,6 +11,11 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     {
       mkdir("./SAVE",S_IRWXU);
     }
+    std::string bmp = "./DATA";
+    if (access(bmp.c_str(), 0) == -1)
+    {
+      mkdir("./DATA",S_IRWXU);
+    }
     m_mcs=m_mcs->Get();
     pImage=cv::Mat::zeros(CAMIMAGE_HEIGHT,CAMIMAGE_WIDTH,CV_8UC1);
 
@@ -76,6 +81,9 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
     });
 
+    connect(ui->saveshowBtn,&QPushButton::clicked,[=](){      //保存显示
+        u8_save_imgdata=1;
+    });
 }
 
 leaser_measurementDlg::~leaser_measurementDlg()
@@ -122,6 +130,7 @@ void leaser_measurementDlg::UpdataUi()
     {
         ui->connectcamBtn->setText("连接");
         ui->write_cam_editBtn->setEnabled(false);
+
     }
     else
     {
@@ -173,6 +182,17 @@ void leaser_measurementDlg::int_show_image_inlab(cv::Mat cv_image)
     ui->windowshowlib->setPixmap(QPixmap::fromImage(img));
 }
 
+void leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
+{
+    QString dir="./DATA/";
+    QString time;
+    TimeFunction to;
+    to.get_time_ms(&time);
+    QString format=".bmp";
+    dir=dir+time+format;
+    cv::imwrite(dir.toStdString(),cv_image);
+}
+
 void ImgWindowShowThread::Stop()
 {
   if(_p->b_imgshow_thread==true)
@@ -200,12 +220,18 @@ void ImgWindowShowThread::run()
             if(_p->m_mcs->cam->sop_cam[0].cv_image->empty()==0)
             {
             //运行算法
-
                _p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
                _p->Cam_Mem_Updata(_p->pImage.rows,_p->pImage.cols);
                switch(_p->m_mcs->e2proomdata.measurementDlg_leaser_data_mod)
                {
                   case 0:   //显示原图，（不做处理）
+                  {
+                      if(_p->u8_save_imgdata==1)//保存结果
+                      {
+                          _p->save_imgdata_cvimage(_p->pImage);
+                          _p->u8_save_imgdata=0;
+                      }
+                  }
                   break;
                   case 1:   //显示轮廓
                   {

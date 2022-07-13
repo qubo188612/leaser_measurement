@@ -326,8 +326,8 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
     Myhalcv2::Mat m_tempmatIn;
     Int32 nWidth=ImageWidth;	//输入图像宽
     Int32 nHeight=ImageHeight;	//输入图像高
-    Int32 dealstartYmin=10;
-    Int32 dealstartXmin=10;
+    Int32 dealstartYmin=0;
+    Int32 dealstartXmin=0;
     Uint8 filterdata[25]={0,0,1,0,0,
                           0,0,1,0,0,
                           0,0,1,0,0,
@@ -345,8 +345,8 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
     Int32 gujiaerzhi=160;
     Int32 widthliantongdis=5;
     Int32 highliantongdis=5;
-    Int32 jiguanglong=20;//激光长度
-    Int32 jiguangkuandu=4;//激光宽度
+    Int32 jiguanglong=5;//激光长度
+    Int32 jiguangkuandu=10;//激光宽度
     /*********************/
    //cv::cvtColor(cvimgIn, cvimgIn, cv::COLOR_BGR2GRAY);
     *cvimgOut=cvimgIn.clone();
@@ -362,18 +362,19 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
     Myhalcv2::Mygausspyramid(imageIn,&imageGasu);
     Myhalcv2::Mygausspyramid(imageGasu,&imageGasu);
 
-    Myhalcv2::MyCutselfRoi(&imageGasu,dealstartXmin,dealstartYmin,nWidth/4-dealstartXmin*2,nHeight/4-dealstartYmin*2);
+ // Myhalcv2::MyCutselfRoi(&imageGasu,dealstartXmin,dealstartYmin,nWidth/4-dealstartXmin*2,nHeight/4-dealstartYmin*2);
     Myhalcv2::Mybinaryval(imageGasu,&bryvalue,Myhalcv2::MHC_BARINYVAL_MEAN);
     i32_bryvalue=(Int32)bryvalue+pingjun;//求平均值二值化阈值
     Myhalcv2::Mybinary(imageGasu,&imageBry,Myhalcv2::MHC_BARINY_VALUE_IMG,255,i32_bryvalue,0);
     m_brygujia=Myhalcv2::MatCreatzero(nHeight/4,nWidth/4,Myhalcv2::CCV_8UC1,cv8uc1_Imagebuff7);
-    Myhalcv2::Mynormalize_rowXY(imageGasu,&m_brygujia,5);
-    Myhalcv2::MyCutselfRoi(&imageGasu,dealstartXmin,dealstartYmin,nWidth/4-dealstartXmin*2,nHeight/4-dealstartYmin*2);
+    Myhalcv2::Mynormalize_rowXY(imageGasu,&m_brygujia,1);
+ // Myhalcv2::MyCutselfRoi(&imageGasu,dealstartXmin,dealstartYmin,nWidth/4-dealstartXmin*2,nHeight/4-dealstartYmin*2);
     i32_bryvalue=gujiaerzhi;
     Myhalcv2::Mybinary(m_brygujia,&m_brygujia,Myhalcv2::MHC_BARINY_VALUE_IMG,255,i32_bryvalue,0);
-    Myhalcv2::Myintersection(imageBry,m_brygujia,&imageBry);
-    Myhalcv2::Myconnection(imageBry,&ImageConect,50,widthliantongdis,Myhalcv2::MHC_8LT,cv8uc1_Imagebuff3);//创建8联通区域ImageConect,最小面积120,两区域距离小于2认为同一区域
-    Myhalcv2::Myselect_shape(&ImageConect,&ImageConectlong,Myhalcv2::MHC_CONNECT_HEIGHT,jiguanglong,ImageConect.nHeight);//在ImageConect中筛选出高度大于50的联通域
+ // Myhalcv2::Myintersection(imageBry,m_brygujia,&imageBry);
+    Myhalcv2::MatClone(m_brygujia,&imageBry);
+    Myhalcv2::Myconnection(imageBry,&ImageConect,5,widthliantongdis,Myhalcv2::MHC_8LT,cv8uc1_Imagebuff3);//创建8联通区域ImageConect,最小面积120,两区域距离小于2认为同一区域
+    Myhalcv2::Myselect_shape(&ImageConect,&ImageConectlong,Myhalcv2::MHC_CONNECT_WIDTH_HEIGHT,jiguanglong,MAX(ImageConect.nWidth,ImageConect.nHeight));//在ImageConect中筛选出高度大于50的联通域
 
     Myhalcv2::Myregion_to_bin(&ImageConectlong,&imageBry,255);
     if(ImageConectlong.AllMarkPointCount==0)
@@ -451,85 +452,14 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
     {
         imageGasu.data[(X_line[j]>>1)*imageGasu.nWidth+j]=255;
     }
+    Myhalcv2::Myresizefix2bitdata_4fSize(X_line,X_lineMark,f_line,nWidth/4);
 
-    Myhalcv2::Mydilation_circle(imageGasu,&imageGasu,1,Myhalcv2::MHC_MORPH_RECT);
-
-    //大图上拟合
-    Myhalcv2::Mysmallest_rectangle(&ImageConect,&nstarti,&nendi,&nstartj,&nendj);
-    nstarti=nstarti*4-10;
-    nstartj=nstartj*4-10;
-    nendi=nendi*4+10;
-    nendj=nendj*4+10;
-    if(nstarti<(Int32)imageIn.startx)
-    {
-        nstarti=imageIn.startx;
-    }
-    if(nstartj<(Int32)imageIn.starty)
-    {
-        nstartj=imageIn.starty;
-    }
-    if(nendi>(Int32)imageIn.startx+imageIn.width-1)
-    {
-        nendi=imageIn.startx+imageIn.width-1;
-    }
-    if(nendj>(Int32)imageIn.starty+imageIn.height-1)
-    {
-        nendj=imageIn.starty+imageIn.height-1;
-    }
-
-    Myhalcv2::MyCutRoi(imageIn,&m_tempmatIn,Myhalcv2::MHC_CUT_NOTCOPY,nstarti,nstartj,nendi-nstarti+1,nendj-nstartj+1);
-    m_brygujia=Myhalcv2::MatCreatzero(nHeight,nWidth,Myhalcv2::CCV_8UC1,cv8uc1_Imagebuff7);
-    Myhalcv2::Mygaussia(m_tempmatIn,&m_brygujia,Myhalcv2::GAUSS_WIN_5x5);
-    Myhalcv2::Myfilter(m_brygujia,m_filter,&m16_filterIma,Myhalcv2::CCV_16UC1,0,f_center);
-
-    m_brygujia=Myhalcv2::MatCreatClone(imageIn,cv8uc1_Imagebuff7);
-    memset(X_line,0,sizeof(Int32)*nWidth);
-    memset(X_lineMark,0,nWidth);
-    X_Linestarty=0;
-    X_Lineendy=0;
-
-    for(i=nstarti;i<=nendi;i++)
-    {
-        Uint16 max=0;
-        Uint16 maxX=nstarti;
-        Uint16 maxXn=0;
-        for(j=nstartj;j<=nendj;j++)
-        {
-            Int32 dj=(j>>2);
-            Int32 di=(i>>2);
-            if(imageGasu.data[dj*imageGasu.nWidth+di]!=0)
-            {
-                if(max<m16_filterIma.ptr_ushort[j*m16_filterIma.nWidth+i])
-                {
-                    max=m16_filterIma.ptr_ushort[j*m16_filterIma.nWidth+i];
-                    maxXn=1;
-                    maxX=j;
-                }
-                else if(max==m16_filterIma.ptr_ushort[j*m16_filterIma.nWidth+i])
-                {
-                    maxXn++;
-                    maxX=j+maxX;
-                }
-            }
-        }
-        if(maxXn!=0)
-        {
-            X_line[i]=(((maxX<<1)/maxXn)>>1);
-            X_lineMark[i]=1;
-            if(X_Linestarty==0)
-            {
-                X_Linestarty=i;//骨架起点
-            }
-            X_Lineendy=i;//骨架终点
-        }
-    }
-    Myhalcv2::Myfixdata(X_line,X_lineMark,nWidth);//修复空的线
     if(show==true)
     {
       memset(imageIn.data,0,imageIn.nWidth*imageIn.nHeight);
-      for(j=X_Linestarty;j<=X_Lineendy;j++)
+      for(j=0;j<nWidth;j++)
       {
-          imageIn.data[X_line[j]*imageIn.nWidth+j]=255;
+          imageIn.data[(Int32)(f_line[j]+0.5)*imageIn.nWidth+j]=255;
       }
       Myhalcv2::MatToCvMat(imageIn,cvimgOut);
     }

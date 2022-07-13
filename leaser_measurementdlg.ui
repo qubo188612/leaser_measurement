@@ -18,7 +18,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>521</width>
+     <width>607</width>
      <height>32</height>
     </rect>
    </property>
@@ -65,6 +65,13 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="saveshowBtn">
+      <property name="text">
+       <string>保存</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QLabel" name="windowshowlib">
@@ -77,7 +84,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>TextLabel</string>
+    <string/>
    </property>
   </widget>
   <widget class="QWidget" name="gridLayoutWidget">

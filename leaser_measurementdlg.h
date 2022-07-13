@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include "algorithm.h"
+#include "TimeFunction.h"
 
 namespace Ui {
 class leaser_measurementDlg;
@@ -51,6 +52,9 @@ public:
 
     void int_show_image_inlab(cv::Mat cv_image);        //在windowshowlib中显示cv_image
 
+    bool u8_save_imgdata;     //保存图像
+    void save_imgdata_cvimage(cv::Mat cv_image);  //保存opencv类型图
+
 private:
 
     leaser_showpointdlg showpoint;
@@ -59,8 +63,7 @@ private:
 
     void UpdataUi();  //刷新控件显示和使能
 
-    void InitSetEdit(); //初始化控件数字
-
+    void InitSetEdit(); //初始化控件数字  
 };
 
 class ImgWindowShowThread : public QThread
