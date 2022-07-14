@@ -6,4 +6,6 @@
 
 #define CAMTOTALNUM                 1       //当前同型号下支持几路相机
 
+#define CLOULD_POINT_NOTDATE        FLT_MAX   //深度值不存在时点云的值
+
 #endif // GLOBAL_H

@@ -4,6 +4,7 @@
 #include "cam_sen.h"
 #include "soptopcamera.h"
 #include "E2proomData.h"
+#include "ResultData.h"
 
 class Cam_Sen;
 class SoptopCamera;
@@ -16,6 +17,8 @@ public:
     Cam_Sen *cam;    //相机
 
     E2proomData e2proomdata;	//存储的数据
+
+    ResultData resultdata;		//实时结果数据
 
 protected:
     my_parameters();

@@ -20,6 +20,7 @@
 #include <dirent.h>
 #include "algorithm.h"
 #include "TimeFunction.h"
+#include "MyPlcFunction.h"
 
 namespace Ui {
 class leaser_measurementDlg;
@@ -43,6 +44,8 @@ public:
 
     algorithm *my_alg;//算法
 
+    MyPlcFunction pclclass;//点云算法
+
     cv::Mat pImage;//要计算的图像
 
     void Cam_Mem_Updata(Int32 memHeight,Int32 memWidth);  //内存检测
@@ -54,6 +57,7 @@ public:
 
     bool u8_save_imgdata;     //保存图像
     void save_imgdata_cvimage(cv::Mat cv_image);  //保存opencv类型图
+    void save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);                //保存点云
 
 private:
 

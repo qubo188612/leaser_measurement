@@ -71,13 +71,18 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
     });
 
-    connect(ui->showdeepimgBth,&QPushButton::clicked,[=](){      //显示深度图
+    connect(ui->showtragetorBtn,&QPushButton::clicked,[=](){
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=2;
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
     });
 
-    connect(ui->showclouldpointBtn,&QPushButton::clicked,[=](){      //显示点云图
+    connect(ui->showdeepimgBth,&QPushButton::clicked,[=](){      //显示深度图
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=3;
+        m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+    });
+
+    connect(ui->showclouldpointBtn,&QPushButton::clicked,[=](){      //显示点云图
+        m_mcs->e2proomdata.measurementDlg_leaser_data_mod=4;
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
     });
 
@@ -130,7 +135,6 @@ void leaser_measurementDlg::UpdataUi()
     {
         ui->connectcamBtn->setText("连接");
         ui->write_cam_editBtn->setEnabled(false);
-
     }
     else
     {
@@ -193,6 +197,19 @@ void leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
     cv::imwrite(dir.toStdString(),cv_image);
 }
 
+void leaser_measurementDlg::save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould)
+{
+    pcl::PointCloud<pcl::PointXYZ>::Ptr saveclould(new pcl::PointCloud<pcl::PointXYZ>);
+    QString dir="./DATA/";
+    QString time;
+    TimeFunction to;
+    to.get_time_ms(&time);
+    QString format=".pcd";
+    dir=dir+time+format;
+    pcl::copyPointCloud(*pclclould,*saveclould);//点云转换
+    pcl::io::savePCDFile(dir.toStdString(),*saveclould);
+}
+
 void ImgWindowShowThread::Stop()
 {
   if(_p->b_imgshow_thread==true)
@@ -235,17 +252,34 @@ void ImgWindowShowThread::run()
                   break;
                   case 1:   //显示轮廓
                   {
-                      cv::Mat imageOut,cv_dlinecenter;
-                      _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&cv_dlinecenter,true);
-                      _p->int_show_image_inlab(imageOut);
+                      _p->my_alg->alg1_leasercenter(_p->pImage,&_p->m_mcs->resultdata.cv_imagelinecenter,&_p->m_mcs->resultdata.cv_dlinecenter,true);
+                      _p->int_show_image_inlab(_p->m_mcs->resultdata.cv_imagelinecenter);
+                      if(_p->u8_save_imgdata==1)//保存结果
+                      {
+                          _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_imagelinecenter);
+                          _p->u8_save_imgdata=0;
+                      }
                   }
                   break;
-                  case 2:   //显示深度图
+                  case 2:   //显示轮廓点云
+                  {
+                      cv::Mat imageOut;
+                      _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                      _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                      if(_p->u8_save_imgdata==1)//保存结果
+                      {
+                          _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                          _p->u8_save_imgdata=0;
+                      }
+
+                  }
+                  break;
+                  case 3:   //显示深度图
                   {
 
                   }
                   break;
-                  case 3:   //显示点云
+                  case 4:   //显示点云
                   {
 
                   }

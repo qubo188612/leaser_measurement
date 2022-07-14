@@ -14,6 +14,8 @@ QT       += core gui network
 SOURCES += \
         E2proomData.cpp \
         FileOut.cpp \
+        MyPlcFunction.cpp \
+        ResultData.cpp \
         TimeFunction.cpp \
         algorithm.cpp \
         cam_sen.cpp \
@@ -23,6 +25,7 @@ SOURCES += \
         my_parameters.cpp \
         soptopcamera.cpp
 
+#Myhalcv2资源添加
 SOURCES += /home/qubo/Myhalcv2/myhalcv2.cpp
 
 # Default rules for deployment.
@@ -37,6 +40,8 @@ FORMS += \
 HEADERS += \
     E2proomData.h \
     FileOut.h \
+    MyPlcFunction.h \
+    ResultData.h \
     TimeFunction.h \
     algorithm.h \
     cam_sen.h \
@@ -59,7 +64,28 @@ INCLUDEPATH +=/opt/ros/galactic/include \
 LIBS += /opt/ros/galactic/lib/lib*.so
 LIBS += /opt/ros/galactic/lib/x86_64-linux-gnu/lib*.so
 
-#Myhalcv2库添加
-
+#Myhalcv2资源添加
 INCLUDEPATH +=/home/qubo/Myhalcv2 \
+
+#Eigen库
+INCLUDEPATH += /usr/include/eigen3
+
+#VTK库添加
+INCLUDEPATH +=/usr/local/include/vtk-7.1 \
+
+LIBS += /usr/local/lib/libvtk*
+
+#Boost
+INCLUDEPATH += /usr/include/boost
+
+LIBS += /usr/lib/x86_64-linux-gnu/libboost_*.so
+
+#PCL库添加
+INCLUDEPATH +=/usr/local/include/pcl-1.12 \
+
+LIBS += /usr/local/lib/libpcl_*
+
+
+
+
 
