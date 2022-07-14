@@ -25,6 +25,11 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     InitSetEdit();
     UpdataUi();
 
+    //点云显示在控件上
+    ui->pclshowlib->SetRenderWindow(m_mcs->resultdata.viewer->getRenderWindow());
+    m_mcs->resultdata.viewer->setupInteractor(ui->pclshowlib->GetInteractor(), ui->pclshowlib->GetRenderWindow());
+    ui->pclshowlib->update();
+
     imgshow_thread = new ImgWindowShowThread(this);
     b_imgshow_thread=true;
     imgshow_thread->start();
@@ -64,26 +69,34 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     connect(ui->showcamimgBtn,&QPushButton::clicked,[=](){      //显示原图
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=0;
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=false;    //显示原图
+        UpdataUi();
     });
 
     connect(ui->showcontourBtn,&QPushButton::clicked,[=](){      //显示轮廓
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=1;
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+        UpdataUi();
     });
 
-    connect(ui->showtragetorBtn,&QPushButton::clicked,[=](){
+    connect(ui->showtragetorBtn,&QPushButton::clicked,[=](){      //显示轨迹
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=2;
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+        UpdataUi();
+        m_mcs->resultdata.viewer->removeAllPointClouds();
+        m_mcs->resultdata.viewer->removeAllShapes();
+
     });
 
     connect(ui->showdeepimgBth,&QPushButton::clicked,[=](){      //显示深度图
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=3;
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+        UpdataUi();
     });
 
     connect(ui->showclouldpointBtn,&QPushButton::clicked,[=](){      //显示点云图
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=4;
         m_mcs->cam->sop_cam[0].b_pause_show_image_inlab=true;     //显示处理图，要暂停原图显示
+        UpdataUi();
     });
 
     connect(ui->saveshowBtn,&QPushButton::clicked,[=](){      //保存显示
@@ -140,6 +153,17 @@ void leaser_measurementDlg::UpdataUi()
     {
         ui->connectcamBtn->setText("断开");
         ui->write_cam_editBtn->setEnabled(true);
+    }
+    if(m_mcs->e2proomdata.measurementDlg_leaser_data_mod==2||m_mcs->e2proomdata.measurementDlg_leaser_data_mod==4)
+    {
+        //点云显示
+        ui->windowshowlib->setVisible(false);
+        ui->pclshowlib->setVisible(true);
+    }
+    else
+    {
+        ui->windowshowlib->setVisible(true);
+        ui->pclshowlib->setVisible(false);
     }
 }
 
@@ -266,6 +290,7 @@ void ImgWindowShowThread::run()
                       cv::Mat imageOut;
                       _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
                       _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                      _p->m_mcs->resultdata.viewer->addPointCloud(_p->m_mcs->resultdata.ptr_pcl_lineclould);
                       if(_p->u8_save_imgdata==1)//保存结果
                       {
                           _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
