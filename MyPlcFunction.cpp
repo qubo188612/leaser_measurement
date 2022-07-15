@@ -48,9 +48,9 @@ void MyPlcFunction::float_to_oneline_pclclould(float *f_data,int f_datanum,pcl::
                 uint8_t B=stb+(f_data[i]-mindata)/every_add;
                 uint32_t rgb = (static_cast<uint32_t>(R) << 16 | static_cast<uint32_t>(G) << 8 | static_cast<uint32_t>(B));
                 point.rgb = *reinterpret_cast<float*>(&rgb);
-                point.x=i;
+                point.x=i*COLS_PROPORTION;
                 point.y=0;
-                point.z=f_data[i];
+                point.z=f_data[i]*ROWS_PROPORTION;
                 (*point_cloud_ptr)->points.push_back (point);
             }
         }

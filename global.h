@@ -8,4 +8,9 @@
 
 #define CLOULD_POINT_NOTDATE        FLT_MAX   //深度值不存在时点云的值
 
+#define ROWS_PROPORTION              1.0     //相机图像高度比例   实际距离(mm)/相机像素距离
+#define COLS_PROPORTION              1.0     //相机图像宽度比例   实际距离(mm)/相机像素距离
+
+#define DEEPIMG_CALLBACKNUM_DNUM     5     //采集深度图时多采集的帧数
+
 #endif // GLOBAL_H

@@ -107,6 +107,13 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     connect(ui->saveshowBtn,&QPushButton::clicked,[=](){      //保存显示
         u8_save_imgdata=1;
     });
+
+    connect(ui->deepimg_StartBtn,&QPushButton::clicked,[=](){   //一键采集深度
+        if(m_mcs->resultdata.b_deepimg_working==false)//深度图空闲
+        {
+            start_deepimg();
+        }
+    });
 }
 
 leaser_measurementDlg::~leaser_measurementDlg()
@@ -128,7 +135,9 @@ void leaser_measurementDlg::InitSetEdit()
     data_min=QString::number(m_mcs->cam->sop_cam[0].i32_exposure_min);
     data_max=QString::number(m_mcs->cam->sop_cam[0].i32_exposure_max);
     msg="("+data_min+"-"+data_max+")";
-    ui->label_2->setText(msg);
+    ui->label_2->setText(msg);  
+    ui->deepimg_Edit_1->setText(QString::number(m_mcs->e2proomdata.measurementDlg_deepimg_distance));
+    ui->deepimg_Edit_2->setText(QString::number(m_mcs->e2proomdata.measurementDlg_deepimg_speed));
 }
 
 
@@ -154,22 +163,44 @@ void leaser_measurementDlg::UpdataUi()
     {
         ui->connectcamBtn->setText("连接");
         ui->write_cam_editBtn->setEnabled(false);
+        ui->deepimg_StartBtn->setEnabled(false);
     }
     else
     {
         ui->connectcamBtn->setText("断开");
         ui->write_cam_editBtn->setEnabled(true);
+        ui->deepimg_StartBtn->setEnabled(true);
     }
     if(m_mcs->e2proomdata.measurementDlg_leaser_data_mod==2||m_mcs->e2proomdata.measurementDlg_leaser_data_mod==4)
     {
         //点云显示
         ui->windowshowlib->setVisible(false);
-        ui->pclshowlib->setVisible(true);
+        ui->pclshowlib->setVisible(true);   
     }
     else
     {
         ui->windowshowlib->setVisible(true);
         ui->pclshowlib->setVisible(false);
+    }
+    if(m_mcs->e2proomdata.measurementDlg_leaser_data_mod==3||m_mcs->e2proomdata.measurementDlg_leaser_data_mod==4)
+    {
+        ui->deepimg_Edit_1->setVisible(true);
+        ui->deepimg_Edit_2->setVisible(true);
+        ui->deepimg_label_1->setVisible(true);
+        ui->deepimg_label_2->setVisible(true);
+        ui->deepimg_label_3->setVisible(true);
+        ui->deepimg_label_4->setVisible(true);
+        ui->deepimg_StartBtn->setVisible(true);
+    }
+    else
+    {
+        ui->deepimg_Edit_1->setVisible(false);
+        ui->deepimg_Edit_2->setVisible(false);
+        ui->deepimg_label_1->setVisible(false);
+        ui->deepimg_label_2->setVisible(false);
+        ui->deepimg_label_3->setVisible(false);
+        ui->deepimg_label_4->setVisible(false);
+        ui->deepimg_StartBtn->setVisible(false);
     }
 }
 
@@ -193,6 +224,22 @@ void leaser_measurementDlg::Cam_Mem_Updata(Int32 memHeight,Int32 memWidth)
       Myhalcv2::MyhalcvMemInit(memHeight,memWidth);
       my_alg->Init_algMem(memHeight,memWidth);
     }
+}
+
+void leaser_measurementDlg::start_deepimg()
+{
+    int callback_timer;//定时器间隔
+    m_mcs->e2proomdata.measurementDlg_deepimg_distance=ui->deepimg_Edit_1->text().toFloat();
+    m_mcs->e2proomdata.measurementDlg_deepimg_speed=ui->deepimg_Edit_2->text().toFloat();
+    float usetime=m_mcs->e2proomdata.measurementDlg_deepimg_distance/m_mcs->e2proomdata.measurementDlg_deepimg_speed;//获得采集时间(秒)
+    float numcallback=m_mcs->e2proomdata.measurementDlg_deepimg_distance/COLS_PROPORTION;//获得采集次数
+    callback_timer=usetime/numcallback;//获得采集间隔(秒/次)
+    m_mcs->resultdata.deepimg_callbacknum=numcallback+0.5+DEEPIMG_CALLBACKNUM_DNUM;
+    m_mcs->resultdata.deepimg_timer=callback_timer*1000.0+0.5;//(毫秒/次)
+    m_mcs->resultdata.b_deepimg_working=true;
+    m_mcs->resultdata.deepimg_callbacknum_nownum=0;
+    m_mcs->resultdata.ptr_pcl_deepclould->clear();
+    timer_tragetor_clould->start(m_mcs->resultdata.deepimg_timer);
 }
 
 void leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
@@ -221,7 +268,16 @@ void leaser_measurementDlg::save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZ
 
 void leaser_measurementDlg::slot_timer_tragetor_clould()
 {
-
+    m_mcs->resultdata.deepimg_callbacknum_nownum++;
+    if(m_mcs->resultdata.deepimg_callbacknum_nownum>m_mcs->resultdata.deepimg_callbacknum)
+    {
+        timer_tragetor_clould->stop();
+        m_mcs->resultdata.b_deepimg_working=false;
+    }
+    else
+    {
+        m_mcs->resultdata.b_deepimg_pushoneline=true;
+    }
 }
 
 void leaser_measurementDlg::int_show_cvimage_inlab(cv::Mat cv_image)
@@ -321,7 +377,13 @@ void ImgWindowShowThread::run()
                   break;
                   case 3:   //显示深度图
                   {
-
+                      if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
+                      {
+                          cv::Mat imageOut;
+                          _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
+                          _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                          _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                      }
                   }
                   break;
                   case 4:   //显示点云

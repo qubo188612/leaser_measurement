@@ -57,6 +57,8 @@ public:
     void save_imgdata_cvimage(cv::Mat cv_image);  //保存opencv类型图
     void save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);                //保存点云
 
+    void start_deepimg();         //开始采集深度图
+
 private:
 
     leaser_showpointdlg showpoint;
