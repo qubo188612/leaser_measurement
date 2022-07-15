@@ -14,6 +14,7 @@ public:
     ResultData();
     ~ResultData();
 
+    cv::Mat cv_image;                                                //激光原图
     cv::Mat cv_imagelinecenter;                                      //轮廓检测结果图
     cv::Mat cv_dlinecenter;                                          //轮廓数据CV_32FC1形状，1行N列
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptr_pcl_lineclould;       //轮廓检测结果

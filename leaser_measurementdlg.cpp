@@ -25,12 +25,18 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     InitSetEdit();
     UpdataUi();
 
+    timer_tragetor_clould=new QTimer(this);
+    connect(timer_tragetor_clould,SIGNAL(timeout()),this,SLOT(slot_timer_tragetor_clould()));//slot_timer_tragetor_clould()为自定义定时器槽
+
     //点云显示在控件上
     ui->pclshowlib->SetRenderWindow(m_mcs->resultdata.viewer->getRenderWindow());
     m_mcs->resultdata.viewer->setupInteractor(ui->pclshowlib->GetInteractor(), ui->pclshowlib->GetRenderWindow());
     ui->pclshowlib->update();
 
     imgshow_thread = new ImgWindowShowThread(this);
+    connect(imgshow_thread, SIGNAL(Send_show_cvimage_inlab(cv::Mat)), this, SLOT(int_show_cvimage_inlab(cv::Mat)));
+    connect(imgshow_thread, SIGNAL(Send_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr)), this, SLOT(init_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr)));
+
     b_imgshow_thread=true;
     imgshow_thread->start();
 
@@ -84,7 +90,6 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
         UpdataUi();
         m_mcs->resultdata.viewer->removeAllPointClouds();
         m_mcs->resultdata.viewer->removeAllShapes();
-
     });
 
     connect(ui->showdeepimgBth,&QPushButton::clicked,[=](){      //显示深度图
@@ -110,6 +115,7 @@ leaser_measurementDlg::~leaser_measurementDlg()
     imgshow_thread->Stop();
     imgshow_thread->quit();
     imgshow_thread->wait();
+    delete timer_tragetor_clould;
     delete my_alg;
     delete ui;
 }
@@ -189,27 +195,6 @@ void leaser_measurementDlg::Cam_Mem_Updata(Int32 memHeight,Int32 memWidth)
     }
 }
 
-void leaser_measurementDlg::int_show_image_inlab(cv::Mat cv_image)
-{
-    QImage::Format format = QImage::Format_RGB888;
-    switch (cv_image.type())
-    {
-    case CV_8UC1:
-      format = QImage::Format_Indexed8;
-      break;
-    case CV_8UC3:
-      format = QImage::Format_RGB888;
-      break;
-    case CV_8UC4:
-      format = QImage::Format_ARGB32;
-      break;
-    }
-    QImage img = QImage((const uchar*)cv_image.data, cv_image.cols, cv_image.rows,
-    cv_image.cols * cv_image.channels(), format);
-    img = img.scaled(ui->windowshowlib->width(),ui->windowshowlib->height(),Qt::IgnoreAspectRatio, Qt::SmoothTransformation);//图片自适应lab大小
-    ui->windowshowlib->setPixmap(QPixmap::fromImage(img));
-}
-
 void leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
 {
     QString dir="./DATA/";
@@ -232,6 +217,40 @@ void leaser_measurementDlg::save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZ
     dir=dir+time+format;
     pcl::copyPointCloud(*pclclould,*saveclould);//点云转换
     pcl::io::savePCDFile(dir.toStdString(),*saveclould);
+}
+
+void leaser_measurementDlg::slot_timer_tragetor_clould()
+{
+
+}
+
+void leaser_measurementDlg::int_show_cvimage_inlab(cv::Mat cv_image)
+{
+    QImage::Format format = QImage::Format_RGB888;
+    switch (cv_image.type())
+    {
+    case CV_8UC1:
+      format = QImage::Format_Indexed8;
+      break;
+    case CV_8UC3:
+      format = QImage::Format_RGB888;
+      break;
+    case CV_8UC4:
+      format = QImage::Format_ARGB32;
+      break;
+    }
+    QImage img = QImage((const uchar*)cv_image.data, cv_image.cols, cv_image.rows,
+    cv_image.cols * cv_image.channels(), format);
+    img = img.scaled(ui->windowshowlib->width(),ui->windowshowlib->height(),Qt::IgnoreAspectRatio, Qt::SmoothTransformation);//图片自适应lab大小
+    ui->windowshowlib->setPixmap(QPixmap::fromImage(img));
+}
+
+void leaser_measurementDlg::init_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould)
+{
+    m_mcs->resultdata.viewer->removeAllPointClouds();
+    m_mcs->resultdata.viewer->removeAllShapes();
+    m_mcs->resultdata.viewer->addPointCloud(pclclould);
+    ui->pclshowlib->update();
 }
 
 void ImgWindowShowThread::Stop()
@@ -276,8 +295,9 @@ void ImgWindowShowThread::run()
                   break;
                   case 1:   //显示轮廓
                   {
-                      _p->my_alg->alg1_leasercenter(_p->pImage,&_p->m_mcs->resultdata.cv_imagelinecenter,&_p->m_mcs->resultdata.cv_dlinecenter,true);
-                      _p->int_show_image_inlab(_p->m_mcs->resultdata.cv_imagelinecenter);
+                      _p->my_alg->alg1_leasercenter(_p->pImage,&_p->m_mcs->resultdata.cv_imagelinecenter,&_p->m_mcs->resultdata.cv_dlinecenter,true);                      
+                      qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
+                      emit Send_show_cvimage_inlab(_p->m_mcs->resultdata.cv_imagelinecenter);
                       if(_p->u8_save_imgdata==1)//保存结果
                       {
                           _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_imagelinecenter);
@@ -290,13 +310,13 @@ void ImgWindowShowThread::run()
                       cv::Mat imageOut;
                       _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
                       _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                      _p->m_mcs->resultdata.viewer->addPointCloud(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                      qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr"); //传递自定义类型信号时要添加注册
+                      emit Send_show_pclclould_list(_p->m_mcs->resultdata.ptr_pcl_lineclould);
                       if(_p->u8_save_imgdata==1)//保存结果
                       {
                           _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
                           _p->u8_save_imgdata=0;
                       }
-
                   }
                   break;
                   case 3:   //显示深度图

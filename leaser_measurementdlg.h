@@ -53,8 +53,6 @@ public:
     bool b_imgshow_thread;      //线程运行标记
     bool stop_b_imgshow_thread;  //是否成功断开线程
 
-    void int_show_image_inlab(cv::Mat cv_image);        //在windowshowlib中显示cv_image
-
     bool u8_save_imgdata;     //保存图像
     void save_imgdata_cvimage(cv::Mat cv_image);  //保存opencv类型图
     void save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);                //保存点云
@@ -68,6 +66,16 @@ private:
     void UpdataUi();  //刷新控件显示和使能
 
     void InitSetEdit(); //初始化控件数字  
+
+    QTimer *timer_tragetor_clould;      //轨迹进入点云的定时器
+
+private slots:
+
+    void slot_timer_tragetor_clould();      //轨迹进入点云的定时器中断函数
+
+    void int_show_cvimage_inlab(cv::Mat cv_image);        //在windowshowlib中显示cv_image
+
+    void init_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);      //在QVTKWidgetlib中显示点云
 };
 
 class ImgWindowShowThread : public QThread
@@ -81,6 +89,10 @@ protected:
 private:
     leaser_measurementDlg *_p;
 
+signals:
+    // 自定义信号
+    void Send_show_cvimage_inlab(cv::Mat cv_image);       //发送图像显示信号
+    void Send_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);      //发送点云显示信号
 };
 
 #endif // LEASER_MEASUREMENTDLG_H

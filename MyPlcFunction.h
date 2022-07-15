@@ -9,6 +9,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/console/parse.h>
 #include <opencv2/opencv.hpp>
+#include "QVTKWidget.h"
 
 class MyPlcFunction
 {
