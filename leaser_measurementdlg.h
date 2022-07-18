@@ -59,6 +59,12 @@ public:
 
     void start_deepimg();         //开始采集深度图
 
+    void start_clould();          //开始采集点云
+
+    volatile bool b_int_show_cvimage_inlab_finish;          //int_show_cvimage_inlab信号曹空闲
+
+    volatile bool b_init_show_pclclould_list_finish;          //init_show_pclclould_list信号曹空闲
+
 private:
 
     leaser_showpointdlg showpoint;
@@ -73,11 +79,10 @@ private:
 
 private slots:
 
+    void int_show_cvimage_inlab(cv::Mat cv_image);        //在windowshowlib中显示cv_image
+    void init_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);      //在QVTKWidgetlib中显示点云
     void slot_timer_tragetor_clould();      //轨迹进入点云的定时器中断函数
 
-    void int_show_cvimage_inlab(cv::Mat cv_image);        //在windowshowlib中显示cv_image
-
-    void init_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);      //在QVTKWidgetlib中显示点云
 };
 
 class ImgWindowShowThread : public QThread

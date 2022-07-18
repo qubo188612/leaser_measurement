@@ -11,4 +11,5 @@ ResultData::~ResultData()
 {
     b_deepimg_working=false;
     b_deepimg_pushoneline=false;
+    b_deepimg_showclould_finish=false;
 }

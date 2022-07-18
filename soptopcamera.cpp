@@ -24,11 +24,7 @@ void Camshow::topic_callback(const sensor_msgs::msg::Image msg)  const
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(msg, "mono8");
     *(_p->cv_image)=cv_ptr->image.clone();
-    //显示图像
-    if(_p->b_pause_show_image_inlab==false)
-    {
-        _p->int_show_image_inlab();
-    }
+    _p->b_updataimage_finish=true;
   }
   else
   {
@@ -44,12 +40,12 @@ SoptopCamera::SoptopCamera()
   i32_exposure_min=SOPTOPCAM_EXPOSURE_MIN;
   i32_exposure_max=SOPTOPCAM_EXPOSURE_MAX;
   i32_exposure_use=SOPTOPCAM_EXPOSURE_USE;
-  b_pause_show_image_inlab=false;
 
   read_para();
 
   cv_image=new cv::Mat;
   b_connect=false;
+  b_updataimage_finish=false;
   StartCamera_thread = new StartCameraThread(this);
 }
 

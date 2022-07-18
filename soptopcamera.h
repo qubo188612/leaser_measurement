@@ -44,12 +44,13 @@ public:
 
     cv::Mat *cv_image;    //相机图像
     QLabel *m_lab_show;   //显示控件位置
-    bool b_pause_show_image_inlab;  //是否暂停显示(但画面还会再后台传输)
 
     void int_show_image_inlab();//刷新图像
 
     void write_para();     //保存相机参数
     void init_para();       //默认参赛
+
+    volatile bool b_updataimage_finish; //获取最相机图像完成
 protected:
     StartCameraThread *StartCamera_thread;
 

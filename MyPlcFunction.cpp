@@ -10,7 +10,7 @@ MyPlcFunction::~MyPlcFunction()
 
 }
 
-void MyPlcFunction::float_to_oneline_pclclould(float *f_data,int f_datanum,pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr)
+void MyPlcFunction::float_to_oneline_pclclould(float *f_data,int f_datanum,float y,pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_Out)
 {
     pcl::PointXYZRGB point;
     cv::Mat cf_fdata=cv::Mat(1,f_datanum,CV_32FC1);
@@ -18,7 +18,7 @@ void MyPlcFunction::float_to_oneline_pclclould(float *f_data,int f_datanum,pcl::
     int i;
     int havepoint=0;
 
-    (*point_cloud_ptr)->clear();
+    (*point_cloud_ptr_Out)->clear();
     for(i=0;i<f_datanum;i++)
     {
         if(f_data[i]!=CLOULD_POINT_NOTDATE)
@@ -37,28 +37,98 @@ void MyPlcFunction::float_to_oneline_pclclould(float *f_data,int f_datanum,pcl::
     }
     if(havepoint!=0)
     {
+        float every_add=(maxdata-mindata)/255;
         for(i=0;i<f_datanum;i++)
         {
             if(f_data[i]!=CLOULD_POINT_NOTDATE)
             {
                 int str=255,stg=0,stb=0;
-                float every_add=(maxdata-mindata)/255;
                 uint8_t R=str-(f_data[i]-mindata)/every_add;
                 uint8_t G=stg+(f_data[i]-mindata)/every_add;
                 uint8_t B=stb+(f_data[i]-mindata)/every_add;
                 uint32_t rgb = (static_cast<uint32_t>(R) << 16 | static_cast<uint32_t>(G) << 8 | static_cast<uint32_t>(B));
                 point.rgb = *reinterpret_cast<float*>(&rgb);
                 point.x=i*COLS_PROPORTION;
-                point.y=0;
+                point.y=y;
                 point.z=f_data[i]*ROWS_PROPORTION;
-                (*point_cloud_ptr)->points.push_back (point);
+                (*point_cloud_ptr_Out)->points.push_back (point);
             }
         }
     }
-    (*point_cloud_ptr)->width = (int) (*point_cloud_ptr)->points.size ();
-    (*point_cloud_ptr)->height = 1;
+    (*point_cloud_ptr_Out)->width = (int) (*point_cloud_ptr_Out)->points.size ();
+    (*point_cloud_ptr_Out)->height = 1;
+}
 
-//  pcl::visualization::CloudViewer viewer ("pcl—test测试");
-//  viewer.showCloud(point_cloud_ptr);
-//  while (!viewer.wasStopped()){ };
+void MyPlcFunction::updata_color_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_In,pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_Out)
+{
+    pcl::PointXYZ min;//用于存放三个轴的最小值
+    pcl::PointXYZ max;//用于存放三个轴的最大值
+    pcl::PointCloud<pcl::PointXYZ>::Ptr clould(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::copyPointCloud(*(*point_cloud_ptr_In),*clould);//点云转换
+    pcl::getMinMax3D(*clould,min,max);
+    size_t i;
+    float maxdata=max.z,mindata=min.z;
+    float every_add=(maxdata-mindata)/255;
+    pcl::PointXYZRGB point;
+    copyPointCloud(*clould, *(*point_cloud_ptr_Out));
+
+    for(i=0;i<(*point_cloud_ptr_In)->points.size();i++)
+    {
+        float f_data=(*point_cloud_ptr_In)->points[i].z;
+        int str=255,stg=0,stb=0;
+        uint8_t R=str-(f_data-mindata)/every_add;
+        uint8_t G=stg+(f_data-mindata)/every_add;
+        uint8_t B=stb+(f_data-mindata)/every_add;
+        uint32_t rgb = (static_cast<uint32_t>(R) << 16 | static_cast<uint32_t>(G) << 8 | static_cast<uint32_t>(B));
+        (*point_cloud_ptr_Out)->points[i].rgb = *reinterpret_cast<float*>(&rgb);
+    }
+}
+
+void MyPlcFunction::pclclould_to_rangeImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_In,pcl::RangeImage *rangeImage)
+{
+    // We now want to create a range image from the above point cloud, with a 1deg angular resolution
+    //angular_resolution为模拟的深度传感器的角度分辨率，即深度图像中一个像素对应的角度大小
+    float angularResolution = (float) (  0.1f * (M_PI/180.0f));  //   1.0 degree in radians
+     //max_angle_width为模拟的深度传感器的水平最大采样角度，
+    float maxAngleWidth     = (float) (360.0f * (M_PI/180.0f));  // 360.0 degree in radians
+    //max_angle_height为模拟传感器的垂直方向最大采样角度  都转为弧度
+    float maxAngleHeight    = (float) (180.0f * (M_PI/180.0f));  // 180.0 degree in radians
+     //传感器的采集位置
+    Eigen::Affine3f sensorPose = (Eigen::Affine3f)Eigen::Translation3f(0.0f, 0.0f, 0.0f);
+     //深度图像遵循坐标系统
+    pcl::RangeImage::CoordinateFrame coordinate_frame = pcl::RangeImage::CAMERA_FRAME;
+    float noiseLevel=0.00;    //noise_level获取深度图像深度时，近邻点对查询点距离值的影响水平
+    float minRange = 0.0f;     //min_range设置最小的获取距离，小于最小获取距离的位置为传感器的盲区
+    int borderSize = 1;        //border_size获得深度图像的边缘的宽度
+
+    (*rangeImage).createFromPointCloud(*(*point_cloud_ptr_In), angularResolution, maxAngleWidth, maxAngleHeight,
+                                    sensorPose, coordinate_frame, noiseLevel, minRange, borderSize);
+    float* ranges = (*rangeImage).getRangesArray();
+    unsigned char* rgb_image = pcl::visualization::FloatImageUtils::getVisualImage(ranges, (*rangeImage).width, (*rangeImage).height);
+    pcl::io::saveRgbPNGFile("ha.png", rgb_image, (*rangeImage).width, (*rangeImage).height);
+}
+
+void MyPlcFunction::cv_f32deepimg_to_show8deepimg(cv::Mat f32_deepimg,cv::Mat *f8_deepimg)
+{
+    int i,j;
+    cv::Mat mask=cv::Mat::ones(f32_deepimg.rows,f32_deepimg.cols,CV_8UC1);
+    *f8_deepimg=cv::Mat::zeros(f32_deepimg.rows,f32_deepimg.cols,CV_8UC1);
+
+    for(j=0;j<f32_deepimg.rows;j++)
+    {
+        float *f_data=(float*)f32_deepimg.ptr<float>(j);
+        u_int8_t *u8_mask=(u_int8_t*)mask.ptr<u_int8_t>(j);
+        for(i=0;i<f32_deepimg.cols;i++)
+        {
+            if(f_data[i]==CLOULD_POINT_NOTDATE)
+            {
+                u8_mask[i]=0;
+            }
+        }
+    }
+    if(cv::countNonZero(mask)!=0)
+    {
+        cv::normalize(f32_deepimg,*f8_deepimg,0,255,cv::NORM_MINMAX,-1,mask);
+        cv::convertScaleAbs(*f8_deepimg,*f8_deepimg,1,0);
+    }
 }
