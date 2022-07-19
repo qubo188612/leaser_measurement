@@ -67,7 +67,7 @@ public:
 
 private:
 
-    leaser_showpointdlg showpoint;
+    leaser_showpointdlg *showpoint;
 
     ImgWindowShowThread *imgshow_thread;
 

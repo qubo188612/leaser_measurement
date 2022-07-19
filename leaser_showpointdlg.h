@@ -9,6 +9,7 @@
     #include <QtCore5Compat/QTextCodec>
 #endif
 #include "opencv2/opencv.hpp"
+#include "MyPlcFunction.h"
 
 namespace Ui {
 class leaser_showpointdlg;
@@ -24,8 +25,11 @@ public:
 
     void showpoint(std::string filename);      //显示图像
 
-private:
     Ui::leaser_showpointdlg *ui;
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pclclould;    //点云
+private:
+    MyPlcFunction pclclass;//点云算法
 };
 
 #endif // LEASER_SHOWPOINTDLG_H

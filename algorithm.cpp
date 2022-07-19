@@ -123,7 +123,7 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
     }
     Myhalcv2::MyGetthinNoHough(&ImageConectlong,Myhalcv2::THIN_Y,jiguangkuandu,&imageBry);
 //  Myhalcv2::Mydeleteconnection(imageBry,&imageBry,50,highliantongdis,Myhalcv2::MHC_8LT);
-
+    Myhalcv2::Mydilation_circle(imageBry,&imageBry,1,Myhalcv2::MHC_MORPH_ELLIPSE);
     //以下的图像几乎都是完美图像,需要检测出结果
     //以下对高斯图做卷积
     m16_filterIma=Myhalcv2::MatCreatzero(nHeight/4,nWidth/4,Myhalcv2::CCV_16UC1,cv8uc1_Imagebuff6);
@@ -197,9 +197,12 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
     {
         Int32 x=(Int32)(((float)i/4)+0.5);
         Int32 y=(Int32)(f_line[i]/4+0.5);
-        if(imageBry.data[y*imageBry.nWidth+x]==0)
+        if(x<imageBry.nWidth&&y<imageBry.nHeight)
         {
-            f_line[i]=CLOULD_POINT_NOTDATE;
+            if(imageBry.data[y*imageBry.nWidth+x]==0)
+            {
+                f_line[i]=CLOULD_POINT_NOTDATE;
+            }
         }
     }
     if(show==true)
@@ -207,7 +210,11 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
       memset(imageIn.data,0,imageIn.nWidth*imageIn.nHeight);
       for(j=0;j<nWidth;j++)
       {
-          imageIn.data[(Int32)(f_line[j]+0.5)*imageIn.nWidth+j]=255;
+          Int32 i=(f_line[j]+0.5);
+          if(i<imageIn.nHeight)
+          {
+              imageIn.data[i*imageIn.nWidth+j]=255;
+          }
       }
       Myhalcv2::MatToCvMat(imageIn,cvimgOut);
     }

@@ -22,7 +22,7 @@ public:
     cv::Mat cv_8deepimg_temp;                                        //深度图检测结果(0-255)
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr ptr_pcl_deepclould;       //深度检测结果点云
 
-    pcl::visualization::PCLVisualizer::Ptr viewer;                   //界面显示的点云
+    pcl::visualization::PCLVisualizer::Ptr viewer;                   //主界面显示的点云
 
     int deepimg_timer;                                               //采集深度图中断间隔采样时间ms
     int deepimg_callbacknum;                                         //采集深度图中进入中断的总次数

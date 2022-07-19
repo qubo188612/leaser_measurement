@@ -21,6 +21,8 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
 
     my_alg=new algorithm(m_mcs);
 
+    showpoint=new leaser_showpointdlg;
+
     ui->setupUi(this);
     InitSetEdit();
     UpdataUi();
@@ -31,6 +33,8 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     //点云显示在控件上
     ui->pclshowlib->SetRenderWindow(m_mcs->resultdata.viewer->getRenderWindow());
     m_mcs->resultdata.viewer->setupInteractor(ui->pclshowlib->GetInteractor(), ui->pclshowlib->GetRenderWindow());
+    m_mcs->resultdata.viewer->addCoordinateSystem();  //添加坐标系
+//  m_mcs->resultdata.viewer->initCameraParameters();//从用户默认方向观测点云
     ui->pclshowlib->update();
 
     imgshow_thread = new ImgWindowShowThread(this);
@@ -57,14 +61,14 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
 
     connect(ui->openpointfileBtn,&QPushButton::clicked,[=](){         //连接相机
 
-        QString fileName = QFileDialog::getOpenFileName(this, "open Image", "", "Image File(*.bmp *.jpg *.jpeg *.png)");
+        QString fileName = QFileDialog::getOpenFileName(this, "open Image", "", "Image File(*.bmp *.pcd *.tiff *.BMP *.PCD *.TIFF)");
         QTextCodec* code = QTextCodec::codecForName("gb18030");
         std::string name = code->fromUnicode(fileName).data();
         if(name.size()>0)
         {
-            showpoint.setWindowTitle("点云图像");
-            showpoint.show();
-            showpoint.showpoint(name);
+            showpoint->setWindowTitle("点云图像");
+            showpoint->showpoint(name);
+            showpoint->exec();
         }
     });
 
@@ -108,7 +112,11 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     connect(ui->deepimg_StartBtn,&QPushButton::clicked,[=](){   //一键采集深度
         if(m_mcs->resultdata.b_deepimg_working==false)//深度图空闲
         {
+        #if ACQUISITION_MOD==AUTO_MOD
             start_deepimg();
+        #else
+
+        #endif
         }
     });
 }
@@ -121,6 +129,7 @@ leaser_measurementDlg::~leaser_measurementDlg()
     imgshow_thread->wait();
     delete timer_tragetor_clould;
     delete my_alg;
+    delete showpoint;
     delete ui;
 }
 
@@ -245,7 +254,28 @@ void leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
     QString time;
     TimeFunction to;
     to.get_time_ms(&time);
-    QString format=".bmp";
+    QString format;
+    switch(cv_image.type())
+    {
+    case CV_8UC1:
+        format=".bmp";
+    break;
+    case CV_8UC3:
+        format=".bmp";
+    break;
+    case CV_32FC1:
+        format=".tiff";
+    break;
+    case CV_32FC3:
+        format=".tiff";
+    break;
+    case CV_64FC1:
+        format=".tiff";
+    break;
+    case CV_64FC3:
+        format=".tiff";
+    break;
+    }
     dir=dir+time+format;
     cv::imwrite(dir.toStdString(),cv_image);
 }
@@ -304,6 +334,7 @@ void leaser_measurementDlg::init_show_pclclould_list(pcl::PointCloud<pcl::PointX
     m_mcs->resultdata.viewer->removeAllPointClouds();
     m_mcs->resultdata.viewer->removeAllShapes();
     m_mcs->resultdata.viewer->addPointCloud(pclclould);
+
     ui->pclshowlib->update();
     b_init_show_pclclould_list_finish=true;
 }
