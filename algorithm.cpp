@@ -101,6 +101,8 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
 
     Myhalcv2::Mygausspyramid(imageIn,&imageGasu);
     Myhalcv2::Mygausspyramid(imageGasu,&imageGasu);
+ // cv::resize(cvimgIn,cvimgIn,cv::Size(0,0),0.25,0.25);
+ // Myhalcv2::CvMatToMat(cvimgIn,&imageGasu,cv8uc1_Imagebuff5);
 
  // Myhalcv2::MyCutselfRoi(&imageGasu,dealstartXmin,dealstartYmin,nWidth/4-dealstartXmin*2,nHeight/4-dealstartYmin*2);
     Myhalcv2::Mybinaryval(imageGasu,&bryvalue,Myhalcv2::MHC_BARINYVAL_MEAN);
@@ -123,7 +125,7 @@ Int8 algorithm::alg1_leasercenter(cv::Mat cvimgIn,cv::Mat *cvimgOut,cv::Mat *cv_
     }
     Myhalcv2::MyGetthinNoHough(&ImageConectlong,Myhalcv2::THIN_Y,jiguangkuandu,&imageBry);
 //  Myhalcv2::Mydeleteconnection(imageBry,&imageBry,50,highliantongdis,Myhalcv2::MHC_8LT);
-    Myhalcv2::Mydilation_circle(imageBry,&imageBry,1,Myhalcv2::MHC_MORPH_ELLIPSE);
+    Myhalcv2::Mydilation_circle2(imageBry,&imageBry,0,2,Myhalcv2::MHC_MORPH_RECT);
     //以下的图像几乎都是完美图像,需要检测出结果
     //以下对高斯图做卷积
     m16_filterIma=Myhalcv2::MatCreatzero(nHeight/4,nWidth/4,Myhalcv2::CCV_16UC1,cv8uc1_Imagebuff6);
