@@ -5,6 +5,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include <sensor_msgs/msg/image.hpp>
+#include "tutorial_interfaces/msg/if_algorhmitcloud.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <QObject>
@@ -45,12 +46,17 @@ public:
     cv::Mat *cv_image;    //相机图像
     QLabel *m_lab_show;   //显示控件位置
 
+    cv::Mat *cv_line;     //相机点云
+    bool b_cv_lineEn;     //相机点云有效位
+
     void int_show_image_inlab();//刷新图像
 
     void write_para();     //保存相机参数
     void init_para();       //默认参赛
 
     volatile bool b_updataimage_finish; //获取最相机图像完成
+    volatile bool b_updatacloud_finish; //获取点云图像完成
+
 protected:
     StartCameraThread *StartCamera_thread;
 
@@ -60,14 +66,12 @@ protected:
 
 class StartCameraThread : public QThread
 {
-
 public:
     StartCameraThread(SoptopCamera *statci_p);
 protected:
     void run();
 private:
     SoptopCamera *_p;
-
 };
 
 class Camshow : public rclcpp::Node
@@ -80,7 +84,9 @@ private:
     SoptopCamera *_p;
 public:
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
+    rclcpp::Subscription<tutorial_interfaces::msg::IfAlgorhmitcloud>::SharedPtr subscricloud_;
     void topic_callback(const sensor_msgs::msg::Image msg)  const;
+    void cloud_callback(const tutorial_interfaces::msg::IfAlgorhmitcloud msg)  const;
 };
 
 #endif // SOPTOPCAMERA_H

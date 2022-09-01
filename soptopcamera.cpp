@@ -10,6 +10,9 @@ Camshow::Camshow(SoptopCamera *statci_p): Node("my_eyes")
 
   subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
         "camera_tis_node/image", rclcpp::SensorDataQoS(), std::bind(&Camshow::topic_callback, this, _1));
+
+  subscricloud_ = this->create_subscription<tutorial_interfaces::msg::IfAlgorhmitcloud>(
+        "line_center_reconstruction_node/cloud_task100_199", rclcpp::SensorDataQoS(), std::bind(&Camshow::cloud_callback, this, _1));
 }
 
 Camshow::~Camshow()
@@ -35,6 +38,26 @@ void Camshow::topic_callback(const sensor_msgs::msg::Image msg)  const
   }
 }
 
+void Camshow::cloud_callback(const tutorial_interfaces::msg::IfAlgorhmitcloud msg)  const
+{
+  if(msg.lasertrackoutcloud.size()>0)
+  {
+    cv::Mat cv_ptr=cv::Mat(1,msg.lasertrackoutcloud.size(),CV_32FC1);
+    float *f_data=cv_ptr.ptr<float>(0);
+    for(int n=0;n<msg.lasertrackoutcloud.size();n++)
+    {
+      f_data[n]=msg.lasertrackoutcloud[n].u;
+    }
+    *(_p->cv_line)=cv_ptr.clone();
+    _p->b_updatacloud_finish=true;
+    _p->b_cv_lineEn=true;
+  }
+  else
+  {
+    _p->b_cv_lineEn=false;
+  }
+}
+
 SoptopCamera::SoptopCamera()
 {
   i32_exposure_min=SOPTOPCAM_EXPOSURE_MIN;
@@ -44,8 +67,10 @@ SoptopCamera::SoptopCamera()
   read_para();
 
   cv_image=new cv::Mat;
+  cv_line=new cv::Mat;
   b_connect=false;
   b_updataimage_finish=false;
+  b_updatacloud_finish=false;
   StartCamera_thread = new StartCameraThread(this);
 }
 
@@ -56,6 +81,7 @@ SoptopCamera::~SoptopCamera()
   delete StartCamera_thread;
   StartCamera_thread=NULL;
   delete cv_image;
+  delete cv_line;
 }
 
 void SoptopCamera::read_para()

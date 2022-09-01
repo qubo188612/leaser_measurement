@@ -2,7 +2,6 @@
 #define ALGORITHM_H
 
 #include "global.h"
-#include "myhalcv2.h"
 #include "my_parameters.h"
 
 class algorithm

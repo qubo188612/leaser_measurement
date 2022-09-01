@@ -17,16 +17,12 @@ SOURCES += \
         MyPlcFunction.cpp \
         ResultData.cpp \
         TimeFunction.cpp \
-        algorithm.cpp \
         cam_sen.cpp \
         leaser_measurementdlg.cpp \
         leaser_showpointdlg.cpp \
         main.cpp \
         my_parameters.cpp \
         soptopcamera.cpp
-
-#Myhalcv2资源添加
-SOURCES += /home/qubo/Myhalcv2/myhalcv2.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -43,15 +39,13 @@ HEADERS += \
     MyPlcFunction.h \
     ResultData.h \
     TimeFunction.h \
-    algorithm.h \
     cam_sen.h \
     global.h \
     leaser_measurementdlg.h \
     leaser_showpointdlg.h \
     my_parameters.h \
-    soptopcamera.h
-
-HEADERS += /home/qubo/Myhalcv2/myhalcv2.h
+    soptopcamera.h \
+    tistdtypes.h
 
 #opencv库的添加
 INCLUDEPATH += /usr/local/OpenCV/Release/include/opencv4 \
@@ -64,8 +58,6 @@ INCLUDEPATH +=/opt/ros/galactic/include \
 LIBS += /opt/ros/galactic/lib/lib*.so
 LIBS += /opt/ros/galactic/lib/x86_64-linux-gnu/lib*.so
 
-#Myhalcv2资源添加
-INCLUDEPATH +=/home/qubo/Myhalcv2 \
 
 #Eigen库
 INCLUDEPATH += /usr/include/eigen3
@@ -89,6 +81,11 @@ LIBS += /usr/local/lib/libpcl_*
 INCLUDEPATH += /home/qubo/modbus/libmodbus/install/include \
 
 LIBS += /home/qubo/modbus/libmodbus/install/lib/libmodbus.so
+
+#自定义ROS接口添加
+INCLUDEPATH +=/home/qubo/myRos2test/install/tutorial_interfaces/include \
+
+LIBS += /home/qubo/myRos2test/install/tutorial_interfaces/lib/libtutorial_interfaces*.so
 
 
 

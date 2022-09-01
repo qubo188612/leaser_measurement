@@ -19,8 +19,6 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     m_mcs=m_mcs->Get();
     pImage=cv::Mat::zeros(CAMIMAGE_HEIGHT,CAMIMAGE_WIDTH,CV_8UC1);
 
-    my_alg=new algorithm(m_mcs);
-
     showpoint=new leaser_showpointdlg;
 
     ui->setupUi(this);
@@ -167,7 +165,6 @@ leaser_measurementDlg::~leaser_measurementDlg()
         ui->record->append("参数端口关闭");
     }
     delete timer_tragetor_clould;
-    delete my_alg;
     delete showpoint;
     delete ui;
 }
@@ -376,29 +373,6 @@ void leaser_measurementDlg::UpdataUi()
     }
 }
 
-void leaser_measurementDlg::Cam_Mem_Updata(Int32 memHeight,Int32 memWidth)
-{
-    static Int32 old_memHeight=-1,old_memWidth=-1;
-    static bool b_initMem=false;
-    if(old_memHeight<memHeight||old_memWidth<memWidth)
-    {
-      old_memHeight=memHeight;
-      old_memWidth=memWidth;
-      if(b_initMem==false)
-      {
-        b_initMem=true;
-      }
-      else
-      {
-        Myhalcv2::MyhalcvMemFree();
-        my_alg->Free_algMem();
-      }
-      Myhalcv2::MyhalcvMemInit(memHeight,memWidth);
-      my_alg->Init_algMem(memHeight,memWidth);
-      m_mcs->resultdata.cv_deepimg=cv::Mat::zeros(memHeight,memWidth,CV_32FC1);
-    }
-}
-
 void leaser_measurementDlg::start_deepimg()
 {
     float callback_timer;//定时器间隔
@@ -537,7 +511,6 @@ void ImgWindowShowThread::run()
             {
             //运行算法
                _p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
-               _p->Cam_Mem_Updata(_p->pImage.rows,_p->pImage.cols);
                switch(_p->m_mcs->e2proomdata.measurementDlg_leaser_data_mod)
                {
                   case 0:   //显示原图，（不做处理）
@@ -557,7 +530,28 @@ void ImgWindowShowThread::run()
                   break;
                   case 1:   //显示轮廓
                   {
-                      _p->my_alg->alg1_leasercenter(_p->pImage,&_p->m_mcs->resultdata.cv_imagelinecenter,&_p->m_mcs->resultdata.cv_dlinecenter,true);                      
+                      //_p->my_alg->alg1_leasercenter(_p->pImage,&_p->m_mcs->resultdata.cv_imagelinecenter,&_p->m_mcs->resultdata.cv_dlinecenter,true);
+                      cv::cvtColor(_p->pImage,_p->m_mcs->resultdata.cv_imagelinecenter,cv::COLOR_GRAY2BGR);
+                      if(_p->m_mcs->cam->sop_cam[0].b_updatacloud_finish==true)
+                      {
+                         if(_p->m_mcs->cam->sop_cam[0].b_cv_lineEn==true)
+                         {
+                           _p->cv_line=_p->m_mcs->cam->sop_cam[0].cv_line->clone();
+                           float *f_point=_p->cv_line.ptr<float>(0);
+                           for(int n=0;n<_p->cv_line.cols;n++)
+                           {
+                              if(f_point[n]<=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1&&f_point[n]>=0)
+                              {
+                                int x=n;
+                                int y=f_point[n];
+                                y=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1-y;
+                                _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3]=255;
+                                _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3+1]=0;
+                                _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3+2]=0;
+                              }
+                           }
+                         }
+                      }
                       if(_p->b_int_show_cvimage_inlab_finish==true)
                       {
                           _p->b_int_show_cvimage_inlab_finish=false;
@@ -574,7 +568,7 @@ void ImgWindowShowThread::run()
                   case 2:   //显示轮廓点云
                   {
                       cv::Mat imageOut;
-                      _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                     //_p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
                       _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,0,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
                       if(_p->b_init_show_pclclould_list_finish==true)
                       {
@@ -596,7 +590,7 @@ void ImgWindowShowThread::run()
                            cv::Mat imageOut;
                            float *f_line=_p->m_mcs->resultdata.cv_deepimg.ptr<float>(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1);
                            _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
-                           _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                        // _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
                            memcpy(f_line,_p->m_mcs->resultdata.cv_dlinecenter.data,sizeof(float)*_p->m_mcs->resultdata.cv_dlinecenter.cols);
                        }
                        if(_p->b_int_show_cvimage_inlab_finish==true)
@@ -619,7 +613,7 @@ void ImgWindowShowThread::run()
                        {
                            cv::Mat imageOut;
                            _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
-                           _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                       //  _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
                            _p->m_mcs->resultdata.f_deepimg_y=(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1)*COLS_PROPORTION;
                            _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,_p->m_mcs->resultdata.f_deepimg_y,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
                            *(_p->m_mcs->resultdata.ptr_pcl_deepclould)=*(_p->m_mcs->resultdata.ptr_pcl_deepclould)+*(_p->m_mcs->resultdata.ptr_pcl_lineclould);
