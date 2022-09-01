@@ -102,17 +102,35 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
         }
     });
 
-    connect(ui->showcamimgBtn,&QPushButton::clicked,[=](){      //显示原图
+    connect(ui->showcamimgBtn,&QPushButton::clicked,[=](){      //显示原图     
+        if(m_mcs->cam->sop_cam[0].b_connect==true&&m_mcs->e2proomdata.measurementDlg_leaser_data_mod!=0)
+        {
+          m_mcs->cam->sop_cam[0].DisConnect();
+          m_mcs->cam->sop_cam[0].node_mode=0;
+          m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
+        }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=0;
         UpdataUi();
     });
 
     connect(ui->showcontourBtn,&QPushButton::clicked,[=](){      //显示轮廓
+        if(m_mcs->cam->sop_cam[0].b_connect==true&&m_mcs->e2proomdata.measurementDlg_leaser_data_mod==0)
+        {
+          m_mcs->cam->sop_cam[0].DisConnect();
+          m_mcs->cam->sop_cam[0].node_mode=1;
+          m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
+        }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=1;
         UpdataUi();
     });
 
     connect(ui->showtragetorBtn,&QPushButton::clicked,[=](){      //显示轨迹
+        if(m_mcs->cam->sop_cam[0].b_connect==true&&m_mcs->e2proomdata.measurementDlg_leaser_data_mod==0)
+        {
+          m_mcs->cam->sop_cam[0].DisConnect();
+          m_mcs->cam->sop_cam[0].node_mode=1;
+          m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
+        }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=2;
         UpdataUi();
         m_mcs->resultdata.viewer->removeAllPointClouds();
@@ -120,11 +138,23 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     });
 
     connect(ui->showdeepimgBth,&QPushButton::clicked,[=](){      //显示深度图
+        if(m_mcs->cam->sop_cam[0].b_connect==true&&m_mcs->e2proomdata.measurementDlg_leaser_data_mod==0)
+        {
+          m_mcs->cam->sop_cam[0].DisConnect();
+          m_mcs->cam->sop_cam[0].node_mode=1;
+          m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
+        }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=3;
         UpdataUi();
     });
 
     connect(ui->showclouldpointBtn,&QPushButton::clicked,[=](){      //显示点云图
+        if(m_mcs->cam->sop_cam[0].b_connect==true&&m_mcs->e2proomdata.measurementDlg_leaser_data_mod==0)
+        {
+          m_mcs->cam->sop_cam[0].DisConnect();
+          m_mcs->cam->sop_cam[0].node_mode=1;
+          m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
+        }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=4;
         UpdataUi();
     });
@@ -229,6 +259,14 @@ void leaser_measurementDlg::img_windowshow(bool b_show,QLabel *lab_show)
             ui->record->append("激光器任务模式设置成功");
         }
         showupdata_tabWidget();
+        if(m_mcs->e2proomdata.measurementDlg_leaser_data_mod==0)
+        {
+          m_mcs->cam->sop_cam[0].node_mode=0;
+        }
+        else
+        {
+          m_mcs->cam->sop_cam[0].node_mode=1;
+        }
         m_mcs->cam->sop_cam[0].InitConnect(lab_show);
     }
     else
@@ -506,15 +544,16 @@ void ImgWindowShowThread::run()
     while(1)
     {
         if(_p->b_imgshow_thread==true)
-        {
-            if(_p->m_mcs->cam->sop_cam[0].b_updataimage_finish==true)
-            {
+        {          
             //运行算法
-               _p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
-               switch(_p->m_mcs->e2proomdata.measurementDlg_leaser_data_mod)
-               {
-                  case 0:   //显示原图，（不做处理）
-                  {
+             switch(_p->m_mcs->e2proomdata.measurementDlg_leaser_data_mod)
+             {
+                case 0:   //显示原图，（不做处理）
+                {
+                   if(_p->m_mcs->cam->sop_cam[0].b_updataimage_finish==true)
+                   {
+                      _p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
+                   // cv::rotate(_p->pImage, _p->pImage, cv::ROTATE_90_COUNTERCLOCKWISE);
                       if(_p->b_int_show_cvimage_inlab_finish==true)
                       {
                           _p->b_int_show_cvimage_inlab_finish=false;
@@ -526,32 +565,36 @@ void ImgWindowShowThread::run()
                           _p->save_imgdata_cvimage(_p->pImage);
                           _p->u8_save_imgdata=0;
                       }
-                  }
-                  break;
-                  case 1:   //显示轮廓
-                  {
-                      //_p->my_alg->alg1_leasercenter(_p->pImage,&_p->m_mcs->resultdata.cv_imagelinecenter,&_p->m_mcs->resultdata.cv_dlinecenter,true);
-                      cv::cvtColor(_p->pImage,_p->m_mcs->resultdata.cv_imagelinecenter,cv::COLOR_GRAY2BGR);
-                      if(_p->m_mcs->cam->sop_cam[0].b_updatacloud_finish==true)
+                      _p->m_mcs->cam->sop_cam[0].b_updataimage_finish=false;
+                   }
+                }
+                break;
+                case 1:   //显示轮廓
+                {
+                   if(_p->m_mcs->cam->sop_cam[0].b_updatacloud_finish==true)
+                   {
+                    //_p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
+                    //cv::rotate(_p->pImage, _p->pImage, cv::ROTATE_90_COUNTERCLOCKWISE);
+                    //cv::cvtColor(_p->pImage,_p->m_mcs->resultdata.cv_imagelinecenter,cv::COLOR_GRAY2BGR);
+                      _p->m_mcs->resultdata.cv_imagelinecenter=cv::Mat::zeros(CAMIMAGE_HEIGHT,CAMIMAGE_WIDTH,CV_8UC3);
+                      if(_p->m_mcs->cam->sop_cam[0].b_cv_lineEn==true)
                       {
-                         if(_p->m_mcs->cam->sop_cam[0].b_cv_lineEn==true)
+                         _p->cv_line=_p->m_mcs->cam->sop_cam[0].cv_line->clone();
+                         float *f_point=_p->cv_line.ptr<float>(0);
+                         for(int n=0;n<_p->cv_line.cols;n++)
                          {
-                           _p->cv_line=_p->m_mcs->cam->sop_cam[0].cv_line->clone();
-                           float *f_point=_p->cv_line.ptr<float>(0);
-                           for(int n=0;n<_p->cv_line.cols;n++)
-                           {
-                              if(f_point[n]<=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1&&f_point[n]>=0)
-                              {
-                                int x=n;
-                                int y=f_point[n];
-                                y=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1-y;
-                                _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3]=255;
-                                _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3+1]=0;
-                                _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3+2]=0;
-                              }
-                           }
+                            if(f_point[n]<=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1&&f_point[n]>=0)
+                            {
+                              int x=n;
+                              int y=f_point[n];
+                              y=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1-y;
+                              _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3]=255;
+                              _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3+1]=0;
+                              _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3+2]=0;
+                            }
                          }
                       }
+
                       if(_p->b_int_show_cvimage_inlab_finish==true)
                       {
                           _p->b_int_show_cvimage_inlab_finish=false;
@@ -563,85 +606,86 @@ void ImgWindowShowThread::run()
                           _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_imagelinecenter);
                           _p->u8_save_imgdata=0;
                       }
-                  }
-                  break;
-                  case 2:   //显示轮廓点云
-                  {
-                      cv::Mat imageOut;
-                     //_p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
-                      _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,0,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                      if(_p->b_init_show_pclclould_list_finish==true)
-                      {
-                          _p->b_init_show_pclclould_list_finish=false;
-                          qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr"); //传递自定义类型信号时要添加注册
-                          emit Send_show_pclclould_list(_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                      }
-                      if(_p->u8_save_imgdata==1)//保存结果
-                      {
-                          _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                          _p->u8_save_imgdata=0;
-                      }
-                  }
-                  break;
-                  case 3:   //显示深度图
-                  {   
-                       if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
-                       {
-                           cv::Mat imageOut;
-                           float *f_line=_p->m_mcs->resultdata.cv_deepimg.ptr<float>(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1);
-                           _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
-                        // _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
-                           memcpy(f_line,_p->m_mcs->resultdata.cv_dlinecenter.data,sizeof(float)*_p->m_mcs->resultdata.cv_dlinecenter.cols);
-                       }
-                       if(_p->b_int_show_cvimage_inlab_finish==true)
-                       {
-                           _p->b_int_show_cvimage_inlab_finish=false;
-                           _p->pclclass.cv_f32deepimg_to_show8deepimg(_p->m_mcs->resultdata.cv_deepimg,&_p->m_mcs->resultdata.cv_8deepimg_temp);
-                           qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
-                           emit Send_show_cvimage_inlab(_p->m_mcs->resultdata.cv_8deepimg_temp);
-                       }
-                       if(_p->u8_save_imgdata==1)//保存结果
-                       {
-                           _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_deepimg);
-                           _p->u8_save_imgdata=0;
-                       }
-                  }
-                  break;
-                  case 4:   //显示点云
-                  {
-                       if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
-                       {
-                           cv::Mat imageOut;
-                           _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
-                       //  _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
-                           _p->m_mcs->resultdata.f_deepimg_y=(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1)*COLS_PROPORTION;
-                           _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,_p->m_mcs->resultdata.f_deepimg_y,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                           *(_p->m_mcs->resultdata.ptr_pcl_deepclould)=*(_p->m_mcs->resultdata.ptr_pcl_deepclould)+*(_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                       }
-                       if(_p->m_mcs->resultdata.b_deepimg_showclould_finish==true)
-                       {   //采集完成,重新刷新下颜色
-                           _p->m_mcs->resultdata.b_deepimg_showclould_finish=false;
-                           _p->pclclass.updata_color_pclclould(&_p->m_mcs->resultdata.ptr_pcl_lineclould,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                       }
-                       if(_p->b_init_show_pclclould_list_finish==true)
-                       {
-                           _p->b_init_show_pclclould_list_finish=false;
-                           qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr"); //传递自定义类型信号时要添加注册
-                           emit Send_show_pclclould_list(_p->m_mcs->resultdata.ptr_pcl_deepclould);
-                       }
-                       if(_p->u8_save_imgdata==1)//保存结果
-                       {
-                           _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_deepclould);
-                           _p->u8_save_imgdata=0;
-                       }
-                  }
-                  break;
-                  default:
-                  break;
-               }
-               _p->m_mcs->cam->sop_cam[0].b_updataimage_finish=false;
-            }
-            sleep(0);
+                      _p->m_mcs->cam->sop_cam[0].b_updatacloud_finish=false;
+                   }
+                }
+                break;
+                case 2:   //显示轮廓点云
+                {
+                    cv::Mat imageOut;
+                   //_p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                    _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,0,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                    if(_p->b_init_show_pclclould_list_finish==true)
+                    {
+                        _p->b_init_show_pclclould_list_finish=false;
+                        qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr"); //传递自定义类型信号时要添加注册
+                        emit Send_show_pclclould_list(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                    }
+                    if(_p->u8_save_imgdata==1)//保存结果
+                    {
+                        _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                        _p->u8_save_imgdata=0;
+                    }
+                }
+                break;
+                case 3:   //显示深度图
+                {
+                     if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
+                     {
+                         cv::Mat imageOut;
+                         float *f_line=_p->m_mcs->resultdata.cv_deepimg.ptr<float>(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1);
+                         _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
+                      // _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                         memcpy(f_line,_p->m_mcs->resultdata.cv_dlinecenter.data,sizeof(float)*_p->m_mcs->resultdata.cv_dlinecenter.cols);
+                     }
+                     if(_p->b_int_show_cvimage_inlab_finish==true)
+                     {
+                         _p->b_int_show_cvimage_inlab_finish=false;
+                         _p->pclclass.cv_f32deepimg_to_show8deepimg(_p->m_mcs->resultdata.cv_deepimg,&_p->m_mcs->resultdata.cv_8deepimg_temp);
+                         qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
+                         emit Send_show_cvimage_inlab(_p->m_mcs->resultdata.cv_8deepimg_temp);
+                     }
+                     if(_p->u8_save_imgdata==1)//保存结果
+                     {
+                         _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_deepimg);
+                         _p->u8_save_imgdata=0;
+                     }
+                }
+                break;
+                case 4:   //显示点云
+                {
+                     if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
+                     {
+                         cv::Mat imageOut;
+                         _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
+                     //  _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                         _p->m_mcs->resultdata.f_deepimg_y=(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1)*COLS_PROPORTION;
+                         _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,_p->m_mcs->resultdata.f_deepimg_y,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                         *(_p->m_mcs->resultdata.ptr_pcl_deepclould)=*(_p->m_mcs->resultdata.ptr_pcl_deepclould)+*(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                     }
+                     if(_p->m_mcs->resultdata.b_deepimg_showclould_finish==true)
+                     {   //采集完成,重新刷新下颜色
+                         _p->m_mcs->resultdata.b_deepimg_showclould_finish=false;
+                         _p->pclclass.updata_color_pclclould(&_p->m_mcs->resultdata.ptr_pcl_lineclould,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                     }
+                     if(_p->b_init_show_pclclould_list_finish==true)
+                     {
+                         _p->b_init_show_pclclould_list_finish=false;
+                         qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr"); //传递自定义类型信号时要添加注册
+                         emit Send_show_pclclould_list(_p->m_mcs->resultdata.ptr_pcl_deepclould);
+                     }
+                     if(_p->u8_save_imgdata==1)//保存结果
+                     {
+                         _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_deepclould);
+                         _p->u8_save_imgdata=0;
+                     }
+                }
+                break;
+                default:
+                break;
+             }
+
+             sleep(0);
         }
         else
         {

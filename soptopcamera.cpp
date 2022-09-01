@@ -11,8 +11,9 @@ Camshow::Camshow(SoptopCamera *statci_p): Node("my_eyes")
   subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
         "camera_tis_node/image", rclcpp::SensorDataQoS(), std::bind(&Camshow::topic_callback, this, _1));
 
-  subscricloud_ = this->create_subscription<tutorial_interfaces::msg::IfAlgorhmitcloud>(
-        "line_center_reconstruction_node/cloud_task100_199", rclcpp::SensorDataQoS(), std::bind(&Camshow::cloud_callback, this, _1));
+//  subscriresult_ = this->create_subscription<tutorial_interfaces::msg::IfAlgorhmitmsg>(
+//        "/laser_imagepos_node/result", rclcpp::SensorDataQoS(), std::bind(&Camshow::result_callback, this, _1));
+
 }
 
 Camshow::~Camshow()
@@ -25,7 +26,7 @@ void Camshow::topic_callback(const sensor_msgs::msg::Image msg)  const
   if(_p->b_connect==true)
   {
     cv_bridge::CvImagePtr cv_ptr;
-    cv_ptr = cv_bridge::toCvCopy(msg, "mono8");
+    cv_ptr = cv_bridge::toCvCopy(msg, msg.encoding);
     *(_p->cv_image)=cv_ptr->image.clone();
     _p->b_updataimage_finish=true;
   }
@@ -38,23 +39,67 @@ void Camshow::topic_callback(const sensor_msgs::msg::Image msg)  const
   }
 }
 
-void Camshow::cloud_callback(const tutorial_interfaces::msg::IfAlgorhmitcloud msg)  const
+/*
+void Camshow::result_callback(tutorial_interfaces::msg::IfAlgorhmitmsg msg)  const
 {
-  if(msg.lasertrackoutcloud.size()>0)
+  if(_p->b_connect==true)
   {
-    cv::Mat cv_ptr=cv::Mat(1,msg.lasertrackoutcloud.size(),CV_32FC1);
-    float *f_data=cv_ptr.ptr<float>(0);
-    for(int n=0;n<msg.lasertrackoutcloud.size();n++)
-    {
-      f_data[n]=msg.lasertrackoutcloud[n].u;
-    }
-    *(_p->cv_line)=cv_ptr.clone();
-    _p->b_updatacloud_finish=true;
-    _p->b_cv_lineEn=true;
+    cv_bridge::CvImagePtr cv_ptr;
+    cv_ptr = cv_bridge::toCvCopy(msg.imageout, msg.imageout.encoding);
+    *(_p->cv_image)=cv_ptr->image.clone();
+    _p->b_updataimage_finish=true;
   }
   else
   {
-    _p->b_cv_lineEn=false;
+//  system("ros2 param set gpio_raspberry_node laser False");  //激光关闭
+//  system("ros2 param set /camera_tis_node power False");     //相机关闭
+    rclcpp::shutdown();
+    _p->stop_b_connect=true;
+  }
+}
+*/
+
+Cloudshow::Cloudshow(SoptopCamera *statci_p): Node("my_cloud")
+{
+  _p=statci_p;
+
+  subscricloud_ = this->create_subscription<tutorial_interfaces::msg::IfAlgorhmitcloud>(
+        "line_center_reconstruction_node/cloud_task100_199", rclcpp::SensorDataQoS(), std::bind(&Cloudshow::cloud_callback, this, _1));
+
+}
+
+Cloudshow::~Cloudshow()
+{
+
+}
+
+void Cloudshow::cloud_callback(const tutorial_interfaces::msg::IfAlgorhmitcloud msg)  const
+{
+  if(_p->b_connect==true)
+  {
+    if(msg.lasertrackoutcloud.size()>0)
+    {
+      cv::Mat cv_ptr=cv::Mat(1,msg.lasertrackoutcloud.size(),CV_32FC1);
+      float *f_data=cv_ptr.ptr<float>(0);
+      for(int n=0;n<msg.lasertrackoutcloud.size();n++)
+      {
+        f_data[n]=msg.lasertrackoutcloud[n].u;
+      }
+      *(_p->cv_line)=cv_ptr.clone();
+      _p->b_cv_lineEn=true;
+    }
+    else
+    {
+      _p->b_cv_lineEn=false;
+    }
+    _p->b_updatacloud_finish=true;
+  }
+  else
+  {
+//  system("ros2 param set gpio_raspberry_node laser False");  //激光关闭
+//  system("ros2 param set /camera_tis_node power False");     //相机关闭
+    rclcpp::shutdown();
+    _p->stop_b_connect=true;
   }
 }
 
@@ -71,6 +116,8 @@ SoptopCamera::SoptopCamera()
   b_connect=false;
   b_updataimage_finish=false;
   b_updatacloud_finish=false;
+  node_mode=0;
+  b_stopthred=true;
   StartCamera_thread = new StartCameraThread(this);
 }
 
@@ -155,7 +202,7 @@ void SoptopCamera::DisConnect()
   {
     stop_b_connect=false;
     b_connect=false;
-    while (stop_b_connect==false)
+    while (stop_b_connect==false||b_stopthred==false)
     {
       QThread::sleep(0);
     }
@@ -201,11 +248,21 @@ StartCameraThread::StartCameraThread(SoptopCamera *statci_p)
 
 void StartCameraThread::run()
 {
+  _p->b_stopthred=false;
   if(_p->b_connect==true)
   {
-    rclcpp::init(_p->argc,_p->argv);
-    rclcpp::spin(std::make_shared<Camshow>(_p));
+    if(_p->node_mode==0)
+    {
+      rclcpp::init(_p->argc,_p->argv);
+      rclcpp::spin(std::make_shared<Camshow>(_p));
+    }
+    else if(_p->node_mode==1)
+    {
+      rclcpp::init(_p->argc,_p->argv);
+      rclcpp::spin(std::make_shared<Cloudshow>(_p));
+    }
   }
+  _p->b_stopthred=true;
 }
 
 

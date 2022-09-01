@@ -6,6 +6,7 @@
 #include "std_msgs/msg/string.hpp"
 #include <sensor_msgs/msg/image.hpp>
 #include "tutorial_interfaces/msg/if_algorhmitcloud.hpp"
+#include "tutorial_interfaces/msg/if_algorhmitmsg.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <QObject>
@@ -21,6 +22,8 @@
 #define SOPTOPCAM_EXPOSURE_MIN    20
 
 using std::placeholders::_1;
+using std::placeholders::_2;
+
 class StartCameraThread;
 
 class SoptopCamera
@@ -36,6 +39,8 @@ public:
     void DisConnect();    //断开相机
     bool b_connect;       //是否连接相机
     bool stop_b_connect;  //是否成功断开相机
+
+    int node_mode;      //0:订阅原图,1:订阅点云
 
     int i32_exposure;         //曝光值
     int i32_exposure_max;     //曝光最大值
@@ -56,6 +61,8 @@ public:
 
     volatile bool b_updataimage_finish; //获取最相机图像完成
     volatile bool b_updatacloud_finish; //获取点云图像完成
+
+    volatile bool b_stopthred;
 
 protected:
     StartCameraThread *StartCamera_thread;
@@ -84,8 +91,19 @@ private:
     SoptopCamera *_p;
 public:
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
-    rclcpp::Subscription<tutorial_interfaces::msg::IfAlgorhmitcloud>::SharedPtr subscricloud_;
     void topic_callback(const sensor_msgs::msg::Image msg)  const;
+};
+
+class Cloudshow : public rclcpp::Node
+{
+public:
+    Cloudshow(SoptopCamera *statci_p);
+    ~Cloudshow();
+
+private:
+    SoptopCamera *_p;
+public:
+    rclcpp::Subscription<tutorial_interfaces::msg::IfAlgorhmitcloud>::SharedPtr subscricloud_;
     void cloud_callback(const tutorial_interfaces::msg::IfAlgorhmitcloud msg)  const;
 };
 
