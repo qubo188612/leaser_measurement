@@ -4,9 +4,9 @@ Camshow::Camshow(SoptopCamera *statci_p): Node("my_eyes")
 {
   _p=statci_p;
 
-  system("ros2 param set gpio_raspberry_node laser True");  //激光打开
-  system("ros2 param set /camera_tis_node power True");     //相机打开
-  _p->updata_parameter();                                   //应用相机参数
+//system("ros2 param set gpio_raspberry_node laser True");  //激光打开
+//system("ros2 param set /camera_tis_node power True");     //相机打开
+//_p->updata_parameter();                                   //应用相机参数
 
   subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
         "camera_tis_node/image", rclcpp::SensorDataQoS(), std::bind(&Camshow::topic_callback, this, _1));
@@ -28,8 +28,8 @@ void Camshow::topic_callback(const sensor_msgs::msg::Image msg)  const
   }
   else
   {
-    system("ros2 param set gpio_raspberry_node laser False");  //激光关闭
-    system("ros2 param set /camera_tis_node power False");     //相机关闭
+//  system("ros2 param set gpio_raspberry_node laser False");  //激光关闭
+//  system("ros2 param set /camera_tis_node power False");     //相机关闭
     rclcpp::shutdown();
     _p->stop_b_connect=true;
   }

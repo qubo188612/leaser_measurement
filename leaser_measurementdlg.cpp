@@ -73,9 +73,35 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     });
 
     connect(ui->write_cam_editBtn,&QPushButton::clicked,[=](){      //设置相机参数
-        m_mcs->cam->sop_cam[0].i32_exposure=ui->exposureEdit->text().toInt();
-        m_mcs->cam->sop_cam[0].updata_parameter();
-        m_mcs->cam->sop_cam[0].write_para();
+
+        if(m_mcs->resultdata.link_param_state==true)
+        {
+            int alg0_99_threshold=ui->exposureEdit->text().toInt();
+            if(alg0_99_threshold<20||alg0_99_threshold>65535)
+            {
+                ui->record->append("设置相机曝光值超出范围");
+            }
+            else
+            {
+                uint16_t tab_reg[1];
+                tab_reg[0]=alg0_99_threshold;
+                int rc=modbus_write_registers(m_mcs->resultdata.ctx_param,ALS103_EXPOSURE_TIME_REG_ADD,1,tab_reg);
+                if(rc!=1)
+                {
+                    ui->record->append("设置曝光参数失败");
+                }
+                else
+                {
+                    m_mcs->cam->sop_cam[0].i32_exposure=alg0_99_threshold;
+                    m_mcs->cam->sop_cam[0].write_para();
+                    ui->record->append("设置曝光参数成功");
+                }
+            }
+        }
+        else
+        {
+            ui->record->append("请连接相机后再设置曝光值");
+        }
     });
 
     connect(ui->showcamimgBtn,&QPushButton::clicked,[=](){      //显示原图
@@ -127,6 +153,19 @@ leaser_measurementDlg::~leaser_measurementDlg()
     imgshow_thread->Stop();
     imgshow_thread->quit();
     imgshow_thread->wait();
+    if(m_mcs->resultdata.link_result_state==true)
+    {
+        close_camer_modbus();
+        modbus_free(m_mcs->resultdata.ctx_result);
+        m_mcs->resultdata.link_result_state=false;
+        ui->record->append("控制端口关闭");
+    }
+    if(m_mcs->resultdata.link_param_state==true)
+    {
+        modbus_close(m_mcs->resultdata.ctx_param);
+        m_mcs->resultdata.link_param_state=false;
+        ui->record->append("参数端口关闭");
+    }
     delete timer_tragetor_clould;
     delete my_alg;
     delete showpoint;
@@ -137,6 +176,7 @@ void leaser_measurementDlg::InitSetEdit()
 {
     QString msg;
     QString data_min,data_max;
+    ui->IPadd->setText("192.168.1.2");
     ui->exposureEdit->setText(QString::number(m_mcs->cam->sop_cam[0].i32_exposure));
     data_min=QString::number(m_mcs->cam->sop_cam[0].i32_exposure_min);
     data_max=QString::number(m_mcs->cam->sop_cam[0].i32_exposure_max);
@@ -151,13 +191,143 @@ void leaser_measurementDlg::img_windowshow(bool b_show,QLabel *lab_show)
 {
     if(b_show==true)
     {
+        if(m_mcs->resultdata.link_result_state==false)
+        {
+            QString server_ip=ui->IPadd->text();
+            QString server_port2="1502";
+            m_mcs->resultdata.ctx_result = modbus_new_tcp(server_ip.toUtf8(), server_port2.toInt());
+            if (modbus_connect(m_mcs->resultdata.ctx_result) == -1)
+            {
+                ui->record->append("控制端口连接失败");
+                modbus_free(m_mcs->resultdata.ctx_result);
+                return;
+            }
+            m_mcs->resultdata.link_result_state=true;
+            ui->record->append("控制端口连接成功");
+            open_camer_modbus();
+        }
+        if(m_mcs->resultdata.link_param_state==false)
+        {
+            QString server_ip=ui->IPadd->text();
+            QString server_port1="1500";
+            m_mcs->resultdata.ctx_param = modbus_new_tcp(server_ip.toUtf8(), server_port1.toInt());
+            if (modbus_connect(m_mcs->resultdata.ctx_param) == -1)
+            {
+                ui->record->append("参数端口连接失败");
+                modbus_free(m_mcs->resultdata.ctx_param);
+                return;
+            }
+            m_mcs->resultdata.link_param_state=true;
+            ui->record->append("参数端口连接成功");
+        }
+        //设置task信息
+        u_int16_t task=103;
+        int rc=modbus_write_registers(m_mcs->resultdata.ctx_result,0x102,1,&task);
+        if(rc!=1)
+        {
+            ui->record->append("激光器任务模式设置失败");
+        }
+        else
+        {
+            ui->record->append("激光器任务模式设置成功");
+        }
+        showupdata_tabWidget();
         m_mcs->cam->sop_cam[0].InitConnect(lab_show);
     }
     else
     {
         m_mcs->cam->sop_cam[0].DisConnect();
+        if(m_mcs->resultdata.link_result_state==true)
+        {
+            close_camer_modbus();
+            modbus_free(m_mcs->resultdata.ctx_result);
+            m_mcs->resultdata.link_result_state=false;
+            ui->record->append("控制端口关闭");
+        }
+        if(m_mcs->resultdata.link_param_state==true)
+        {
+            modbus_close(m_mcs->resultdata.ctx_param);
+            m_mcs->resultdata.link_param_state=false;
+            ui->record->append("参数端口关闭");
+        }
     }
 }
+
+void leaser_measurementDlg::open_camer_modbus()
+{
+    if(m_mcs->resultdata.link_result_state==true)
+    {
+        uint16_t tab_reg[1];
+        tab_reg[0]=0xff;
+        int rc=modbus_write_registers(m_mcs->resultdata.ctx_result,0x101,1,tab_reg);
+        if(rc!=1)
+        {
+            ui->record->append("激光器相机启动设置失败");
+        }
+        else
+        {
+            ui->record->append("激光器相机启动设置成功");
+        }
+    }
+}
+
+void leaser_measurementDlg::close_camer_modbus()
+{
+    if(m_mcs->resultdata.link_result_state==true)
+    {
+        uint16_t tab_reg[1];
+        tab_reg[0]=0;
+        int rc=modbus_write_registers(m_mcs->resultdata.ctx_result,0x101,1,tab_reg);
+        if(rc!=1)
+        {
+            ui->record->append("激光器相机关闭设置失败");
+        }
+        else
+        {
+            ui->record->append("激光器相机关闭设置成功");
+        }
+    }
+}
+
+void leaser_measurementDlg::showupdata_tabWidget()
+{
+    if(m_mcs->resultdata.link_param_state==true)
+    {
+        int real_readnum=1;
+        u_int16_t rcvdata[ALS103_REG_TOTALNUM];
+        real_readnum=modbus_read_registers(m_mcs->resultdata.ctx_param,ALS103_EXPOSURE_TIME_REG_ADD,ALS103_REG_TOTALNUM,rcvdata);
+        if(real_readnum<0)
+        {
+            ui->record->append("读取参数失败");
+        }
+        else
+        {
+            if(rcvdata[0]>65535)
+            {
+                m_mcs->cam->sop_cam[0].i32_exposure=65535;
+            }
+            else if(rcvdata[0]<20)
+            {
+                m_mcs->cam->sop_cam[0].i32_exposure=20;
+            }
+            else
+            {
+                m_mcs->cam->sop_cam[0].i32_exposure=rcvdata[0];
+            }
+            ui->exposureEdit->setText(QString::number(m_mcs->cam->sop_cam[0].i32_exposure));
+            /*******************/
+            //这里添加其他设置参数显示
+
+
+
+
+
+            /*******************/
+            ui->record->append("读取参数成功");
+        }
+     }
+}
+
 
 void leaser_measurementDlg::UpdataUi()
 {

@@ -85,7 +85,10 @@ INCLUDEPATH +=/usr/local/include/pcl-1.12 \
 
 LIBS += /usr/local/lib/libpcl_*
 
+#modbustcp库的添加
+INCLUDEPATH += /home/qubo/modbus/libmodbus/install/include \
 
+LIBS += /home/qubo/modbus/libmodbus/install/lib/libmodbus.so
 
 
 

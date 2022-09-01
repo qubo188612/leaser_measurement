@@ -77,6 +77,11 @@ private:
 
     QTimer *timer_tragetor_clould;      //轨迹进入点云的定时器
 
+    void open_camer_modbus();
+    void close_camer_modbus();
+
+    void showupdata_tabWidget();
+
 private slots:
 
     void int_show_cvimage_inlab(cv::Mat cv_image);        //在windowshowlib中显示cv_image

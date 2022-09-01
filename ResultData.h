@@ -7,6 +7,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/console/parse.h>
+#include <modbus/modbus.h>
 
 class ResultData
 {
@@ -31,6 +32,11 @@ public:
     volatile bool b_deepimg_pushoneline;                             //采集深度图中是否允许当前采集一行
     volatile bool b_deepimg_showclould_finish;                       //采集深度图是否可以显示
     float f_deepimg_y;                                               //采集深度图点云时y轴当前坐标
+
+    modbus_t *ctx_result;                                            //控制参数表
+    modbus_t *ctx_param;                                             //激光头参数表
+    uint8_t link_result_state;                                       //结果表获取状态
+    uint8_t link_param_state;                                        //参数表获取状态
 };
 
 #endif // RESULTDATA_H

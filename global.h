@@ -20,4 +20,23 @@
 
 #define DEEPIMG_CALLBACKNUM_DNUM     5     //采集深度图时多采集的帧数
 
+
+//任务号103
+#define ALS103_EXPOSURE_TIME_REG_ADD           0x0060
+#define ALS103_PINGJUN_REG_ADD                 0x0061
+#define ALS103_GUJIAERZHI_REG_ADD              0x0062
+#define ALS103_WIDTHLIANTONGDIS_REG_ADD        0x0063
+#define ALS103_HIGHLIANTONGDIS_REG_ADD         0x0064
+#define ALS103_JIGUANGLONG_REG_ADD             0x0065
+#define ALS103_JIGUANGKUANDU_REG_ADD           0x0066
+
+//任务号103寄存器总数
+#define ALS103_REG_TOTALNUM                    0x0007
+//重置任务103参数寄存器
+#define ALS103_INIT_REG_ADD                    0x006f
+
+//显示图像处理步骤
+#define ALS_SHOW_STEP_REG_ADD                  0x018f
+
+
 #endif // GLOBAL_H
