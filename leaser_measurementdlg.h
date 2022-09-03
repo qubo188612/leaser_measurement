@@ -44,7 +44,7 @@ public:
     MyPlcFunction pclclass;//点云算法
 
     cv::Mat pImage;//要计算的图像
-    cv::Mat cv_line; //要计算的点云
+    std::vector<cv::Point3f> cv_line; //要计算的点云
 
     bool b_imgshow_thread;      //线程运行标记
     bool stop_b_imgshow_thread;  //是否成功断开线程

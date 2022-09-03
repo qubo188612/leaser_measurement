@@ -417,17 +417,16 @@ void leaser_measurementDlg::start_deepimg()
     m_mcs->e2proomdata.measurementDlg_deepimg_distance=ui->deepimg_Edit_1->text().toFloat();
     m_mcs->e2proomdata.measurementDlg_deepimg_speed=ui->deepimg_Edit_2->text().toFloat();
     float usetime=m_mcs->e2proomdata.measurementDlg_deepimg_distance/m_mcs->e2proomdata.measurementDlg_deepimg_speed;//获得采集时间(秒)
-    float numcallback=m_mcs->e2proomdata.measurementDlg_deepimg_distance/COLS_PROPORTION;//获得采集次数
-    callback_timer=usetime/numcallback;//获得采集间隔(秒/次)
-    m_mcs->resultdata.deepimg_callbacknum=numcallback+0.5+DEEPIMG_CALLBACKNUM_DNUM;
-    m_mcs->resultdata.deepimg_timer=callback_timer*1000.0+0.5;//(毫秒/次)
+    callback_timer=usetime;//获得采集间隔(秒/次)
+    m_mcs->resultdata.deepimg_timer=callback_timer*1000.0+0.5;
     m_mcs->resultdata.b_deepimg_working=true;
     m_mcs->resultdata.b_deepimg_showclould_finish=false;
-    m_mcs->resultdata.deepimg_callbacknum_nownum=0;
     m_mcs->resultdata.f_deepimg_y=0;
+    m_mcs->resultdata.b_firstpoint=false;
     m_mcs->resultdata.ptr_pcl_deepclould->clear();
-    m_mcs->resultdata.cv_deepimg=cv::Mat::zeros(m_mcs->resultdata.deepimg_callbacknum,m_mcs->resultdata.cv_deepimg.cols,CV_32FC1);
+//  m_mcs->resultdata.cv_deepimg=cv::Mat::zeros(m_mcs->resultdata.deepimg_callbacknum,m_mcs->resultdata.cv_deepimg.cols,CV_32FC1);
     timer_tragetor_clould->start(m_mcs->resultdata.deepimg_timer);
+    m_mcs->resultdata.b_deepimg_pushoneline=true;
 }
 
 void leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
@@ -477,18 +476,12 @@ void leaser_measurementDlg::save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZ
 
 void leaser_measurementDlg::slot_timer_tragetor_clould()
 {
-    m_mcs->resultdata.deepimg_callbacknum_nownum++;
-    if(m_mcs->resultdata.deepimg_callbacknum_nownum>m_mcs->resultdata.deepimg_callbacknum)
-    {
-        timer_tragetor_clould->stop();
-        m_mcs->resultdata.b_deepimg_working=false;
-        m_mcs->resultdata.b_deepimg_showclould_finish=true;
-    }
-    else
-    {
-        m_mcs->resultdata.b_deepimg_pushoneline=true;
-    }
+    timer_tragetor_clould->stop();
+    m_mcs->resultdata.b_deepimg_working=false;
+    m_mcs->resultdata.b_deepimg_showclould_finish=true;
+    m_mcs->resultdata.b_deepimg_pushoneline=false;
 }
+
 
 void leaser_measurementDlg::int_show_cvimage_inlab(cv::Mat cv_image)
 {
@@ -553,19 +546,18 @@ void ImgWindowShowThread::run()
                    if(_p->m_mcs->cam->sop_cam[0].b_updataimage_finish==true)
                    {
                       _p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
-                   // cv::rotate(_p->pImage, _p->pImage, cv::ROTATE_90_COUNTERCLOCKWISE);
                       if(_p->b_int_show_cvimage_inlab_finish==true)
                       {
                           _p->b_int_show_cvimage_inlab_finish=false;
                           qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
                           emit Send_show_cvimage_inlab(_p->pImage);
                       }
-                      if(_p->u8_save_imgdata==1)//保存结果
-                      {
-                          _p->save_imgdata_cvimage(_p->pImage);
-                          _p->u8_save_imgdata=0;
-                      }
                       _p->m_mcs->cam->sop_cam[0].b_updataimage_finish=false;
+                   }
+                   if(_p->u8_save_imgdata==1)//保存结果
+                   {
+                       _p->save_imgdata_cvimage(_p->pImage);
+                       _p->u8_save_imgdata=0;
                    }
                 }
                 break;
@@ -573,20 +565,16 @@ void ImgWindowShowThread::run()
                 {
                    if(_p->m_mcs->cam->sop_cam[0].b_updatacloud_finish==true)
                    {
-                    //_p->pImage=_p->m_mcs->cam->sop_cam[0].cv_image->clone();
-                    //cv::rotate(_p->pImage, _p->pImage, cv::ROTATE_90_COUNTERCLOCKWISE);
-                    //cv::cvtColor(_p->pImage,_p->m_mcs->resultdata.cv_imagelinecenter,cv::COLOR_GRAY2BGR);
                       _p->m_mcs->resultdata.cv_imagelinecenter=cv::Mat::zeros(CAMIMAGE_HEIGHT,CAMIMAGE_WIDTH,CV_8UC3);
                       if(_p->m_mcs->cam->sop_cam[0].b_cv_lineEn==true)
                       {
-                         _p->cv_line=_p->m_mcs->cam->sop_cam[0].cv_line->clone();
-                         float *f_point=_p->cv_line.ptr<float>(0);
-                         for(int n=0;n<_p->cv_line.cols;n++)
+                         _p->cv_line=(*_p->m_mcs->cam->sop_cam[0].cv_line).linepoint;
+                         for(int n=0;n<_p->cv_line.size();n++)
                          {
-                            if(f_point[n]<=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1&&f_point[n]>=0)
+                            if(_p->cv_line[n].z<=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1&&_p->cv_line[n].z>=0)
                             {
                               int x=n;
-                              int y=f_point[n];
+                              int y=_p->cv_line[n].z;
                               y=_p->m_mcs->resultdata.cv_imagelinecenter.rows-1-y;
                               _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3]=255;
                               _p->m_mcs->resultdata.cv_imagelinecenter.data[y*_p->m_mcs->resultdata.cv_imagelinecenter.cols*3+x*3+1]=0;
@@ -601,67 +589,97 @@ void ImgWindowShowThread::run()
                           qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
                           emit Send_show_cvimage_inlab(_p->m_mcs->resultdata.cv_imagelinecenter);
                       }
-                      if(_p->u8_save_imgdata==1)//保存结果
-                      {
-                          _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_imagelinecenter);
-                          _p->u8_save_imgdata=0;
-                      }
                       _p->m_mcs->cam->sop_cam[0].b_updatacloud_finish=false;
+                   }
+                   if(_p->u8_save_imgdata==1)//保存结果
+                   {
+                       _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_imagelinecenter);
+                       _p->u8_save_imgdata=0;
                    }
                 }
                 break;
                 case 2:   //显示轮廓点云
                 {
-                    cv::Mat imageOut;
-                   //_p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
-                    _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,0,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                    if(_p->b_init_show_pclclould_list_finish==true)
-                    {
-                        _p->b_init_show_pclclould_list_finish=false;
-                        qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr"); //传递自定义类型信号时要添加注册
-                        emit Send_show_pclclould_list(_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                    }
-                    if(_p->u8_save_imgdata==1)//保存结果
-                    {
-                        _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                        _p->u8_save_imgdata=0;
-                    }
+                   if(_p->m_mcs->cam->sop_cam[0].b_updatacloud_finish==true)
+                   {
+                       if(_p->m_mcs->cam->sop_cam[0].b_cv_lineEn==true)
+                       {
+                          _p->cv_line=(*_p->m_mcs->cam->sop_cam[0].cv_line).linepoint;
+                          _p->pclclass.cvpoint3f_to_oneline_pclclould(_p->cv_line,0,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                          if(_p->b_init_show_pclclould_list_finish==true)
+                          {
+                              _p->b_init_show_pclclould_list_finish=false;
+                              qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr"); //传递自定义类型信号时要添加注册
+                              emit Send_show_pclclould_list(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                          }
+                       }
+                       _p->m_mcs->cam->sop_cam[0].b_updatacloud_finish=false;
+                   }
+                   if(_p->u8_save_imgdata==1)//保存结果
+                   {
+                      _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                      _p->u8_save_imgdata=0;
+                   }
                 }
                 break;
                 case 3:   //显示深度图
                 {
-                     if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
-                     {
-                         cv::Mat imageOut;
-                         float *f_line=_p->m_mcs->resultdata.cv_deepimg.ptr<float>(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1);
-                         _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
-                      // _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
-                         memcpy(f_line,_p->m_mcs->resultdata.cv_dlinecenter.data,sizeof(float)*_p->m_mcs->resultdata.cv_dlinecenter.cols);
-                     }
-                     if(_p->b_int_show_cvimage_inlab_finish==true)
-                     {
-                         _p->b_int_show_cvimage_inlab_finish=false;
-                         _p->pclclass.cv_f32deepimg_to_show8deepimg(_p->m_mcs->resultdata.cv_deepimg,&_p->m_mcs->resultdata.cv_8deepimg_temp);
-                         qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
-                         emit Send_show_cvimage_inlab(_p->m_mcs->resultdata.cv_8deepimg_temp);
-                     }
-                     if(_p->u8_save_imgdata==1)//保存结果
-                     {
-                         _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_deepimg);
-                         _p->u8_save_imgdata=0;
-                     }
+                   if(_p->m_mcs->cam->sop_cam[0].b_updatacloud_finish==true)
+                   {
+                       cv::Mat imageOut;
+                       if(_p->m_mcs->cam->sop_cam[0].b_cv_lineEn==true)
+                       {
+                        //   float *f_line=_p->m_mcs->resultdata.cv_deepimg.ptr<float>(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1);
+                        //   _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
+                        //   memcpy(f_line,_p->m_mcs->resultdata.cv_dlinecenter.data,sizeof(float)*_p->m_mcs->resultdata.cv_dlinecenter.cols);
+                       }
+                       if(_p->b_int_show_cvimage_inlab_finish==true)
+                       {
+                           _p->b_int_show_cvimage_inlab_finish=false;
+                           _p->pclclass.cv_f32deepimg_to_show8deepimg(_p->m_mcs->resultdata.cv_deepimg,&_p->m_mcs->resultdata.cv_8deepimg_temp);
+                           qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
+                           emit Send_show_cvimage_inlab(_p->m_mcs->resultdata.cv_8deepimg_temp);
+                       }
+                       _p->m_mcs->cam->sop_cam[0].b_updatacloud_finish=false;
+                   }
+                   if(_p->u8_save_imgdata==1)//保存结果
+                   {
+                       _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_deepimg);
+                       _p->u8_save_imgdata=0;
+                   }
                 }
                 break;
                 case 4:   //显示点云
                 {
-                     if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
+                     if(_p->m_mcs->cam->sop_cam[0].b_updatacloud_finish==true)
                      {
-                         cv::Mat imageOut;
-                         _p->m_mcs->resultdata.b_deepimg_pushoneline=false;
-                     //  _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
-                         _p->m_mcs->resultdata.f_deepimg_y=(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1)*COLS_PROPORTION;
-                         _p->pclclass.float_to_oneline_pclclould((float*)_p->m_mcs->resultdata.cv_dlinecenter.data,_p->m_mcs->resultdata.cv_dlinecenter.cols,_p->m_mcs->resultdata.f_deepimg_y,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
-                         *(_p->m_mcs->resultdata.ptr_pcl_deepclould)=*(_p->m_mcs->resultdata.ptr_pcl_deepclould)+*(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                         if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
+                         {
+                           if(_p->m_mcs->cam->sop_cam[0].b_cv_lineEn==true)
+                           {
+                             _p->cv_line=((*_p->m_mcs->cam->sop_cam[0].cv_line).linepoint);
+                             if(_p->m_mcs->resultdata.b_firstpoint==false)
+                             {
+                                _p->m_mcs->resultdata.b_firstpoint=true;
+                                _p->m_mcs->resultdata.f_deepimg_y=0;
+                                _p->m_mcs->resultdata.timeinfo_st=((*_p->m_mcs->cam->sop_cam[0].cv_line).linehead);
+                             }
+                             else
+                             {
+                                int32_t sec2=((*_p->m_mcs->cam->sop_cam[0].cv_line).linehead).stamp.sec;
+                                int32_t sec1=_p->m_mcs->resultdata.timeinfo_st.stamp.sec;
+                                uint32_t nsec2=((*_p->m_mcs->cam->sop_cam[0].cv_line).linehead).stamp.nanosec;
+                                uint32_t nsec1=_p->m_mcs->resultdata.timeinfo_st.stamp.nanosec;
+                                double fsec2=(double)sec2+(double)nsec2/1000000000.0;
+                                double fsec1=(double)sec1+(double)nsec1/1000000000.0;
+                                _p->m_mcs->resultdata.f_deepimg_y=(fsec2-fsec1)*_p->m_mcs->e2proomdata.measurementDlg_deepimg_speed;
+                             }
+                      //     _p->m_mcs->resultdata.f_deepimg_y=(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1)*COLS_PROPORTION;
+                             _p->pclclass.cvpoint3f_to_oneline_pclclould(_p->cv_line,_p->m_mcs->resultdata.f_deepimg_y,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                             *(_p->m_mcs->resultdata.ptr_pcl_deepclould)=*(_p->m_mcs->resultdata.ptr_pcl_deepclould)+*(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                           }
+                         }
+                         _p->m_mcs->cam->sop_cam[0].b_updatacloud_finish=false;
                      }
                      if(_p->m_mcs->resultdata.b_deepimg_showclould_finish==true)
                      {   //采集完成,重新刷新下颜色

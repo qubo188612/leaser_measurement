@@ -7,6 +7,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include "tutorial_interfaces/msg/if_algorhmitcloud.hpp"
 #include "tutorial_interfaces/msg/if_algorhmitmsg.hpp"
+#include "std_msgs/msg/header.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <QObject>
@@ -25,6 +26,13 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 
 class StartCameraThread;
+
+class Ros2lineinfo
+{
+public:
+    std_msgs::msg::Header linehead;
+    std::vector<cv::Point3f> linepoint;
+};
 
 class SoptopCamera
 {
@@ -51,8 +59,8 @@ public:
     cv::Mat *cv_image;    //相机图像
     QLabel *m_lab_show;   //显示控件位置
 
-    cv::Mat *cv_line;     //相机点云
-    bool b_cv_lineEn;     //相机点云有效位
+    Ros2lineinfo *cv_line;     //相机轮廓
+    bool b_cv_lineEn;     //相机轮廓有效位
 
     void int_show_image_inlab();//刷新图像
 

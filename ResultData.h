@@ -8,6 +8,8 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/console/parse.h>
 #include <modbus/modbus.h>
+#include "global.h"
+#include "std_msgs/msg/header.hpp"
 
 class ResultData
 {
@@ -25,13 +27,13 @@ public:
 
     pcl::visualization::PCLVisualizer::Ptr viewer;                   //主界面显示的点云
 
-    int deepimg_timer;                                               //采集深度图中断间隔采样时间ms
-    int deepimg_callbacknum;                                         //采集深度图中进入中断的总次数
-    int deepimg_callbacknum_nownum;                                  //采集深度图中进入中断的当前次数
+    int deepimg_timer;                                               //采集深度图间隔采样时间ms
     volatile bool b_deepimg_working;                                 //是否正在采集深度图
-    volatile bool b_deepimg_pushoneline;                             //采集深度图中是否允许当前采集一行
     volatile bool b_deepimg_showclould_finish;                       //采集深度图是否可以显示
     float f_deepimg_y;                                               //采集深度图点云时y轴当前坐标
+    bool b_firstpoint;                                               //第一个点
+    bool b_deepimg_pushoneline;                                      //开始采集点云
+    std_msgs::msg::Header timeinfo_st;                               //点云时间起点信息
 
     modbus_t *ctx_result;                                            //控制参数表
     modbus_t *ctx_param;                                             //激光头参数表

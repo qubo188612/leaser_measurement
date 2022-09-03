@@ -20,6 +20,8 @@ public:
     MyPlcFunction();
     ~MyPlcFunction();
 
+    void cvpoint3f_to_oneline_pclclould(std::vector<cv::Point3f>cv_cloud,float x,pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_Out);//把cv_cloud数组输出为一行点云
+
     void float_to_oneline_pclclould(float *f_data,int f_datanum,float y,pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_Out);//把f_data数组输出为一行点云
 
     void updata_color_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_In,pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_Out);//把点云重新按Z轴刷新颜色

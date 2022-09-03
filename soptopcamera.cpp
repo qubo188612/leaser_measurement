@@ -79,13 +79,16 @@ void Cloudshow::cloud_callback(const tutorial_interfaces::msg::IfAlgorhmitcloud 
   {
     if(msg.lasertrackoutcloud.size()>0)
     {
-      cv::Mat cv_ptr=cv::Mat(1,msg.lasertrackoutcloud.size(),CV_32FC1);
-      float *f_data=cv_ptr.ptr<float>(0);
+      std::vector<cv::Point3f> cv_ptr;
+      cv_ptr.resize(msg.lasertrackoutcloud.size());
       for(int n=0;n<msg.lasertrackoutcloud.size();n++)
       {
-        f_data[n]=msg.lasertrackoutcloud[n].u;
+        cv_ptr[n].x=msg.lasertrackoutcloud[n].x;
+        cv_ptr[n].y=msg.lasertrackoutcloud[n].y;
+        cv_ptr[n].z=msg.lasertrackoutcloud[n].u;
       }
-      *(_p->cv_line)=cv_ptr.clone();
+      (*(_p->cv_line)).linepoint=cv_ptr;
+      (*(_p->cv_line)).linehead=msg.header;
       _p->b_cv_lineEn=true;
     }
     else
@@ -112,7 +115,7 @@ SoptopCamera::SoptopCamera()
   read_para();
 
   cv_image=new cv::Mat;
-  cv_line=new cv::Mat;
+  cv_line=new Ros2lineinfo;
   b_connect=false;
   b_updataimage_finish=false;
   b_updatacloud_finish=false;

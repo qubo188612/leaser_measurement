@@ -10,6 +10,54 @@ MyPlcFunction::~MyPlcFunction()
 
 }
 
+void MyPlcFunction::cvpoint3f_to_oneline_pclclould(std::vector<cv::Point3f>cv_cloud,float x,pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_Out)
+{
+    pcl::PointXYZRGB point;
+    float maxdata=FLT_MIN,mindata=FLT_MAX;
+    int i;
+    int havepoint=0;
+
+    (*point_cloud_ptr_Out)->clear();
+    for(i=0;i<cv_cloud.size();i++)
+    {
+        if(cv_cloud[i].z>CLOULD_POINT_NOTDATE)
+        {
+            if(maxdata<cv_cloud[i].y)
+            {
+                maxdata=cv_cloud[i].y;
+                havepoint=1;
+            }
+            if(mindata>cv_cloud[i].y)
+            {
+                mindata=cv_cloud[i].y;
+                havepoint=1;
+            }
+        }
+    }
+    if(havepoint!=0)
+    {
+        float every_add=(maxdata-mindata)/255;
+        for(i=0;i<cv_cloud.size();i++)
+        {
+            if(cv_cloud[i].z>CLOULD_POINT_NOTDATE)
+            {
+                int str=255,stg=0,stb=0;
+                uint8_t R=str-(cv_cloud[i].y-mindata)/every_add;
+                uint8_t G=stg+(cv_cloud[i].y-mindata)/every_add;
+                uint8_t B=stb+(cv_cloud[i].y-mindata)/every_add;
+                uint32_t rgb = (static_cast<uint32_t>(R) << 16 | static_cast<uint32_t>(G) << 8 | static_cast<uint32_t>(B));
+                point.rgb = *reinterpret_cast<float*>(&rgb);
+                point.x=x;
+                point.y=cv_cloud[i].x;
+                point.z=cv_cloud[i].y;
+                (*point_cloud_ptr_Out)->points.push_back (point);
+            }
+        }
+    }
+    (*point_cloud_ptr_Out)->width = (int) (*point_cloud_ptr_Out)->points.size ();
+    (*point_cloud_ptr_Out)->height = 1;
+}
+
 void MyPlcFunction::float_to_oneline_pclclould(float *f_data,int f_datanum,float y,pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_Out)
 {
     pcl::PointXYZRGB point;
