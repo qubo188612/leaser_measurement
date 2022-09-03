@@ -165,7 +165,7 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
 
     connect(ui->deepimg_StartBtn,&QPushButton::clicked,[=](){   //一键采集深度
         if(m_mcs->resultdata.b_deepimg_working==false)//深度图空闲
-        {
+        {   
         #if ACQUISITION_MOD==AUTO_MOD
             start_deepimg();
         #else
@@ -211,6 +211,7 @@ void leaser_measurementDlg::InitSetEdit()
     ui->label_2->setText(msg);  
     ui->deepimg_Edit_1->setText(QString::number(m_mcs->e2proomdata.measurementDlg_deepimg_distance));
     ui->deepimg_Edit_2->setText(QString::number(m_mcs->e2proomdata.measurementDlg_deepimg_speed));
+    ui->deepimg_Edit_3->setText(QString::number(m_mcs->e2proomdata.measurementDlg_deepimg_pisdis));
 }
 
 
@@ -391,6 +392,18 @@ void leaser_measurementDlg::UpdataUi()
     }
     if(m_mcs->e2proomdata.measurementDlg_leaser_data_mod==3||m_mcs->e2proomdata.measurementDlg_leaser_data_mod==4)
     {
+        if(m_mcs->e2proomdata.measurementDlg_leaser_data_mod==3)
+        {
+          ui->deepimg_Edit_3->setVisible(true);
+          ui->label_4->setVisible(true);
+          ui->label_5->setVisible(true);
+        }
+        else if(m_mcs->e2proomdata.measurementDlg_leaser_data_mod==4)
+        {
+          ui->deepimg_Edit_3->setVisible(false);
+          ui->label_4->setVisible(false);
+          ui->label_5->setVisible(false);
+        }
         ui->deepimg_Edit_1->setVisible(true);
         ui->deepimg_Edit_2->setVisible(true);
         ui->deepimg_label_1->setVisible(true);
@@ -403,11 +416,14 @@ void leaser_measurementDlg::UpdataUi()
     {
         ui->deepimg_Edit_1->setVisible(false);
         ui->deepimg_Edit_2->setVisible(false);
+        ui->deepimg_Edit_3->setVisible(false);
         ui->deepimg_label_1->setVisible(false);
         ui->deepimg_label_2->setVisible(false);
         ui->deepimg_label_3->setVisible(false);
         ui->deepimg_label_4->setVisible(false);
         ui->deepimg_StartBtn->setVisible(false);
+        ui->label_4->setVisible(false);
+        ui->label_5->setVisible(false);
     }
 }
 
@@ -416,7 +432,11 @@ void leaser_measurementDlg::start_deepimg()
     float callback_timer;//定时器间隔
     m_mcs->e2proomdata.measurementDlg_deepimg_distance=ui->deepimg_Edit_1->text().toFloat();
     m_mcs->e2proomdata.measurementDlg_deepimg_speed=ui->deepimg_Edit_2->text().toFloat();
+    m_mcs->e2proomdata.measurementDlg_deepimg_pisdis=ui->deepimg_Edit_3->text().toFloat();
     float usetime=m_mcs->e2proomdata.measurementDlg_deepimg_distance/m_mcs->e2proomdata.measurementDlg_deepimg_speed;//获得采集时间(秒)
+    m_mcs->e2proomdata.write_measurementDlg_para();
+
+
     callback_timer=usetime;//获得采集间隔(秒/次)
     m_mcs->resultdata.deepimg_timer=callback_timer*1000.0+0.5;
     m_mcs->resultdata.b_deepimg_working=true;
@@ -626,21 +646,50 @@ void ImgWindowShowThread::run()
                 {
                    if(_p->m_mcs->cam->sop_cam[0].b_updatacloud_finish==true)
                    {
-                       cv::Mat imageOut;
-                       if(_p->m_mcs->cam->sop_cam[0].b_cv_lineEn==true)
+                       if(_p->m_mcs->resultdata.b_deepimg_pushoneline==true)
                        {
-                        //   float *f_line=_p->m_mcs->resultdata.cv_deepimg.ptr<float>(_p->m_mcs->resultdata.deepimg_callbacknum_nownum-1);
-                        //   _p->my_alg->alg1_leasercenter(_p->pImage,&imageOut,&_p->m_mcs->resultdata.cv_dlinecenter,false);
-                        //   memcpy(f_line,_p->m_mcs->resultdata.cv_dlinecenter.data,sizeof(float)*_p->m_mcs->resultdata.cv_dlinecenter.cols);
-                       }
-                       if(_p->b_int_show_cvimage_inlab_finish==true)
-                       {
-                           _p->b_int_show_cvimage_inlab_finish=false;
-                           _p->pclclass.cv_f32deepimg_to_show8deepimg(_p->m_mcs->resultdata.cv_deepimg,&_p->m_mcs->resultdata.cv_8deepimg_temp);
-                           qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
-                           emit Send_show_cvimage_inlab(_p->m_mcs->resultdata.cv_8deepimg_temp);
+                           _p->cv_line=((*_p->m_mcs->cam->sop_cam[0].cv_line).linepoint);
+                           if(_p->m_mcs->resultdata.b_firstpoint==false)
+                           {
+                              _p->m_mcs->resultdata.b_firstpoint=true;
+                              _p->m_mcs->resultdata.f_deepimg_y=0;
+                              _p->m_mcs->resultdata.timeinfo_st=((*_p->m_mcs->cam->sop_cam[0].cv_line).linehead);
+                           }
+                           else
+                           {
+                              int32_t sec2=((*_p->m_mcs->cam->sop_cam[0].cv_line).linehead).stamp.sec;
+                              int32_t sec1=_p->m_mcs->resultdata.timeinfo_st.stamp.sec;
+                              uint32_t nsec2=((*_p->m_mcs->cam->sop_cam[0].cv_line).linehead).stamp.nanosec;
+                              uint32_t nsec1=_p->m_mcs->resultdata.timeinfo_st.stamp.nanosec;
+                              double fsec2=(double)sec2+(double)nsec2/1000000000.0;
+                              double fsec1=(double)sec1+(double)nsec1/1000000000.0;
+                              _p->m_mcs->resultdata.f_deepimg_y=(fsec2-fsec1)*_p->m_mcs->e2proomdata.measurementDlg_deepimg_speed;
+                           }
+                           _p->pclclass.cvpoint3f_to_oneline_pclclould(_p->cv_line,_p->m_mcs->resultdata.f_deepimg_y,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                           *(_p->m_mcs->resultdata.ptr_pcl_deepclould)=*(_p->m_mcs->resultdata.ptr_pcl_deepclould)+*(_p->m_mcs->resultdata.ptr_pcl_lineclould);
                        }
                        _p->m_mcs->cam->sop_cam[0].b_updatacloud_finish=false;
+                   }
+                   if(_p->m_mcs->resultdata.b_deepimg_showclould_finish==true)
+                   {   //采集完成,点云转深度图
+                       _p->m_mcs->resultdata.b_deepimg_showclould_finish=false;
+
+                       /**************************/
+                       //测试
+                       pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
+                       pcl::io::loadPCDFile("/home/qubo/suanfabmp/dianyun/1.pcd", *pointCloud);
+                       pcl::PointCloud<pcl::PointXYZRGB>::Ptr rgbclould(new pcl::PointCloud<pcl::PointXYZRGB>);
+                       pcl::copyPointCloud(*pointCloud,*_p->m_mcs->resultdata.ptr_pcl_lineclould);//点云转换
+                       /**************************/
+
+                       _p->pclclass.pointCloud2imgI(&_p->m_mcs->resultdata.ptr_pcl_lineclould,&_p->m_mcs->resultdata.cv_deepimg,_p->m_mcs->e2proomdata.measurementDlg_deepimg_pisdis);
+                   }
+                   if(_p->b_int_show_cvimage_inlab_finish==true)
+                   {
+                       _p->b_int_show_cvimage_inlab_finish=false;
+                       _p->pclclass.cv_f32deepimg_to_show8deepimg(_p->m_mcs->resultdata.cv_deepimg,&_p->m_mcs->resultdata.cv_8deepimg_temp);
+                       qRegisterMetaType< cv::Mat >("cv::Mat"); //传递自定义类型信号时要添加注册
+                       emit Send_show_cvimage_inlab(_p->m_mcs->resultdata.cv_8deepimg_temp);
                    }
                    if(_p->u8_save_imgdata==1)//保存结果
                    {

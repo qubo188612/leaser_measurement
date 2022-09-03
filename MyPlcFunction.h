@@ -13,6 +13,8 @@
 #include <pcl/io/png_io.h>
 #include <opencv2/opencv.hpp>
 #include "QVTKWidget.h"
+#include <pcl/visualization/range_image_visualizer.h> //深度图像可视化
+
 
 class MyPlcFunction
 {
@@ -29,6 +31,8 @@ public:
     void pclclould_to_rangeImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_In,pcl::RangeImage *rangeImage); //把point_cloud_ptr点云变为深度图rangeImage
 
     void cv_f32deepimg_to_show8deepimg(cv::Mat f32_deepimg,cv::Mat *f8_deepimg);  //把浮点型深度图转成8位图，死区用0表示
+
+    void pointCloud2imgI(pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_In, cv::Mat *f8_deepimg,double resolution);//把点云投影到Z平面，强度用Z表示
 };
 
 #endif // MYPLCFUNCTION_H

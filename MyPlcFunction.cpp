@@ -180,3 +180,64 @@ void MyPlcFunction::cv_f32deepimg_to_show8deepimg(cv::Mat f32_deepimg,cv::Mat *f
         cv::convertScaleAbs(*f8_deepimg,*f8_deepimg,1,0);
     }
 }
+
+void MyPlcFunction::pointCloud2imgI(pcl::PointCloud<pcl::PointXYZRGB>::Ptr *point_cloud_ptr_In, cv::Mat *f8_deepimg,double resolution)
+{
+  float minx, miny, maxx, maxy, mini, maxi;
+  minx = miny = mini = FLT_MAX;
+  maxx = maxy = maxi = -FLT_MAX;
+
+  // 获取点云的最大最小 x、y点的坐标
+  for (int i = 0; i < (*point_cloud_ptr_In)->points.size(); i++)
+  {
+    minx = std::min(minx, (*point_cloud_ptr_In)->points[i].y);
+    miny = std::min(miny, (*point_cloud_ptr_In)->points[i].x);
+    maxx = std::max(maxx, (*point_cloud_ptr_In)->points[i].y);
+    maxy = std::max(maxy, (*point_cloud_ptr_In)->points[i].x);
+    maxi = std::max(maxi, (*point_cloud_ptr_In)->points[i].z);
+  }
+
+  double lx = maxx - minx;					//点云长度
+  double ly = maxy - miny;					//点云宽度
+  int rows = round(ly / resolution);			//图像高度
+  int clos = round(lx / resolution);			//图像宽度
+
+  *f8_deepimg = cv::Mat::zeros(rows, clos, CV_32FC1);
+
+  //强度格网矩阵
+  std::vector<std::vector<float>> vec_grid_intensity;
+
+  //格网分配空间 及初始化
+  vec_grid_intensity.resize(rows);
+  //初始化格网
+  for (int i = 0; i < rows; i++)
+  {
+    vec_grid_intensity[i].resize(clos);
+  }
+
+  //依次将点压入所在格网
+  for (int i = 0; i < (*point_cloud_ptr_In)->points.size(); i++)
+  {
+    int m = (maxy - (*point_cloud_ptr_In)->points[i].x) / resolution;
+    int n = ((*point_cloud_ptr_In)->points[i].y - minx) / resolution;
+
+    if (m > 0 && m < rows && n > 0 && n < clos)
+    {
+        // 将格网中的点云的最大强度值作为格网的强度值
+      vec_grid_intensity[m][n] = std::max((*point_cloud_ptr_In)->points[i].z, vec_grid_intensity[m][n]);
+    }
+  }
+
+  for (int i = 0; i < rows; i++)
+  {
+    float * data = (*f8_deepimg).ptr<float>(i);
+    for (int j = 0; j < clos; j++)
+    {
+      if (vec_grid_intensity[i][j] > 0)
+      {
+        data[j] = vec_grid_intensity[i][j];
+        //各通道像素赋值
+      }
+    }
+  }
+}

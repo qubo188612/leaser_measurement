@@ -8,7 +8,7 @@ ResultData::ResultData()
     ptr_pcl_deepclould.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
     viewer.reset(new pcl::visualization::PCLVisualizer("viewer", false));
     cv_imagelinecenter=cv::Mat::zeros(CAMIMAGE_HEIGHT,CAMIMAGE_WIDTH,CV_8UC3);
-    cv_deepimg=cv::Mat::zeros(1,CAMIMAGE_WIDTH,CV_32FC1);
+    cv_deepimg=cv::Mat::zeros(CAMIMAGE_HEIGHT,CAMIMAGE_WIDTH,CV_32FC1);
 }
 
 ResultData::~ResultData()

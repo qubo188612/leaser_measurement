@@ -1,6 +1,9 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#define LEASER_VIEW_CONER_COL       26.9f      //水平视场26.9度
+#define LEASER_VIEW_CONER_ROW       0.0f      //垂直视场0度
+
 #define CAMIMAGE_HEIGHT             1024     //初始化相机图像长宽
 #define CAMIMAGE_WIDTH              1536
 

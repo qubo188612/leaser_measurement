@@ -11,6 +11,9 @@ E2proomData::E2proomData()
     measurementDlg_deepimg_speed_min=E2POOM_MEASUREMENTDLG_DEEPING_SPEED_MIN;
     measurementDlg_deepimg_speed_max=E2POOM_MEASUREMENTDLG_DEEPING_SPEED_MAX;
     measurementDlg_deepimg_speed_use=E2POOM_MEASUREMENTDLG_DEEPING_SPEED_USE;
+    measurementDlg_deepimg_pisdis_min=E2POOM_MEASUREMENTDLG_DEEPING_PISDIS_MIN;
+    measurementDlg_deepimg_pisdis_use=E2POOM_MEASUREMENTDLG_DEEPING_PISDIS_USE;
+    measurementDlg_deepimg_pisdis_max=E2POOM_MEASUREMENTDLG_DEEPING_PISDIS_MAX;
 
     read_para();
 }
@@ -28,6 +31,8 @@ void E2proomData::check_para()
         measurementDlg_deepimg_distance=measurementDlg_deepimg_distance_use;
     if(measurementDlg_deepimg_speed<=measurementDlg_deepimg_speed_min)
         measurementDlg_deepimg_speed=measurementDlg_deepimg_speed_use;
+    if(measurementDlg_deepimg_pisdis<measurementDlg_deepimg_pisdis_min||measurementDlg_deepimg_pisdis>=measurementDlg_deepimg_pisdis_max)
+        measurementDlg_deepimg_pisdis=measurementDlg_deepimg_pisdis_use;
 }
 
 void E2proomData::read_para()
@@ -60,6 +65,8 @@ void E2proomData::read_para()
       f_p++;
       measurementDlg_deepimg_speed=*f_p;
       f_p++;
+      measurementDlg_deepimg_pisdis=*f_p;
+      f_p++;
     }
     if(buff!=NULL)
     {
@@ -91,6 +98,8 @@ void E2proomData::write_measurementDlg_para()
     f_p++;
     *f_p=measurementDlg_deepimg_speed;
     f_p++;
+    *f_p=measurementDlg_deepimg_pisdis;
+    f_p++;
 
 
     fo.WriteFile(E2POOM_MEASUREMENTDLG_SYSPATH_MOTO,buff,E2POOM_MEASUREMENTDLG_SAVEBUFF);
@@ -107,4 +116,5 @@ void E2proomData::init_measurementDlg_para()
     measurementDlg_leaser_data_mod=measurementDlg_leaser_data_mod_use;
     measurementDlg_deepimg_distance=measurementDlg_deepimg_distance_use;
     measurementDlg_deepimg_speed=measurementDlg_deepimg_speed_use;
+    measurementDlg_deepimg_pisdis=measurementDlg_deepimg_pisdis_use;
 }

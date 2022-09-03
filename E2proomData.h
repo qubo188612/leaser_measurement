@@ -6,7 +6,7 @@
 #include "float.h"
 
 //主页面参数
-#define E2POOM_MEASUREMENTDLG_SAVEBUFF          20
+#define E2POOM_MEASUREMENTDLG_SAVEBUFF          24
 #define E2POOM_MEASUREMENTDLG_SYSPATH_MOTO			"./SAVE/E2P_MEASUREMENT_DLG.bsd"
 
 #define E2POOM_MEASUREMENTDLG_LEASER_DATA_MOD_MIN				0         //显示模式最小值
@@ -18,6 +18,9 @@
 #define E2POOM_MEASUREMENTDLG_DEEPING_SPEED_MIN         0         //深度图像采集速度最小值
 #define E2POOM_MEASUREMENTDLG_DEEPING_SPEED_USE         1         //深度图像采集速度默认值
 #define E2POOM_MEASUREMENTDLG_DEEPING_SPEED_MAX         FLT_MAX   //深度图像采集速度最大值
+#define E2POOM_MEASUREMENTDLG_DEEPING_PISDIS_MIN        0         //深度图每像素对应距离最小值
+#define E2POOM_MEASUREMENTDLG_DEEPING_PISDIS_USE        0.5       //深度图每像素对应距离默认值
+#define E2POOM_MEASUREMENTDLG_DEEPING_PISDIS_MAX        50        //深度图每像素对应距离最大值
 
 class E2proomData
 {
@@ -30,6 +33,7 @@ public:
     Int8 measurementDlg_leaser_data_mod;  //显示模式，0原图，1轮廓,2轮廓点云,3深度图,4点云
     float measurementDlg_deepimg_distance;    //深度图像采集距离
     float measurementDlg_deepimg_speed;       //深度图像采集速度
+    float measurementDlg_deepimg_pisdis;      //深度图每像素对应距离
 
     void write_measurementDlg_para();				//保存主页面参数
     void init_measurementDlg_para();				//初始化主页面参数
@@ -43,6 +47,9 @@ public:
     float measurementDlg_deepimg_speed_min;       //深度图像采集速度最小值
     float measurementDlg_deepimg_speed_max;       //深度图像采集速度最大值
     float measurementDlg_deepimg_speed_use;       //深度图像采集速度默认值
+    float measurementDlg_deepimg_pisdis_min;      //深度图每像素对应距离最小值
+    float measurementDlg_deepimg_pisdis_max;      //深度图每像素对应距离最大值
+    float measurementDlg_deepimg_pisdis_use;      //深度图每像素对应距离默认值
 
 
 /****************************/
