@@ -15,6 +15,13 @@ E2proomData::E2proomData()
     measurementDlg_deepimg_pisdis_use=E2POOM_MEASUREMENTDLG_DEEPING_PISDIS_USE;
     measurementDlg_deepimg_pisdis_max=E2POOM_MEASUREMENTDLG_DEEPING_PISDIS_MAX;
 
+    paramsetingDlg_col_add_distance_min=E2POOM_PARAMSETINGDLG_COL_ADD_DISTANCE_MIN;
+    paramsetingDlg_col_add_distance_max=E2POOM_PARAMSETINGDLG_COL_ADD_DISTANCE_MAX;
+    paramsetingDlg_col_add_distance_use=E2POOM_PARAMSETINGDLG_COL_ADD_DISTANCE_USE;
+    paramsetingDlg_row_add_distance_min=E2POOM_PARAMSETINGDLG_ROW_ADD_DISTANCE_MIN;
+    paramsetingDlg_row_add_distance_max=E2POOM_PARAMSETINGDLG_ROW_ADD_DISTANCE_MAX;
+    paramsetingDlg_row_add_distance_use=E2POOM_PARAMSETINGDLG_ROW_ADD_DISTANCE_USE;
+
     read_para();
 }
 
@@ -33,9 +40,19 @@ void E2proomData::check_para()
         measurementDlg_deepimg_speed=measurementDlg_deepimg_speed_use;
     if(measurementDlg_deepimg_pisdis<measurementDlg_deepimg_pisdis_min||measurementDlg_deepimg_pisdis>=measurementDlg_deepimg_pisdis_max)
         measurementDlg_deepimg_pisdis=measurementDlg_deepimg_pisdis_use;
+    if(paramsetingDlg_col_add_distance<paramsetingDlg_col_add_distance_min||paramsetingDlg_col_add_distance>paramsetingDlg_col_add_distance_max)
+        paramsetingDlg_col_add_distance=paramsetingDlg_col_add_distance_use;
+    if(paramsetingDlg_row_add_distance<paramsetingDlg_row_add_distance_min||paramsetingDlg_row_add_distance>paramsetingDlg_row_add_distance_max)
+        paramsetingDlg_row_add_distance=paramsetingDlg_row_add_distance_use;
 }
 
 void E2proomData::read_para()
+{
+    read_measurementDlg_para();
+    read_paramsetingDlg_para();
+}
+
+void E2proomData::read_measurementDlg_para()
 {
     Uint8 *buff=NULL;
     CFileOut fo;
@@ -73,8 +90,6 @@ void E2proomData::read_para()
       delete []buff;
       buff=NULL;
     }
-
-
 }
 
 void E2proomData::write_measurementDlg_para()
@@ -117,4 +132,72 @@ void E2proomData::init_measurementDlg_para()
     measurementDlg_deepimg_distance=measurementDlg_deepimg_distance_use;
     measurementDlg_deepimg_speed=measurementDlg_deepimg_speed_use;
     measurementDlg_deepimg_pisdis=measurementDlg_deepimg_pisdis_use;
+}
+
+void E2proomData::read_paramsetingDlg_para()
+{
+    Uint8 *buff=NULL;
+    CFileOut fo;
+
+    buff=new Uint8[E2POOM_PARAMSETINGDLG_SAVEBUFF];
+    if(buff==NULL)
+        return;
+    if(0 > fo.ReadFile(E2POOM_PARAMSETINGDLG_SYSPATH_MOTO,buff,E2POOM_PARAMSETINGDLG_SAVEBUFF))
+    {
+        init_paramsetingDlg_para();
+        if(buff!=NULL)
+        {
+          delete []buff;
+          buff=NULL;
+        }
+    }
+    else
+    {
+      float *f_p;
+
+      f_p = (float*)buff;
+      paramsetingDlg_col_add_distance=*f_p;
+      f_p++;
+      paramsetingDlg_row_add_distance=*f_p;
+      f_p++;
+    }
+    if(buff!=NULL)
+    {
+      delete []buff;
+      buff=NULL;
+    }
+}
+
+void E2proomData::write_paramsetingDlg_para()
+{
+    Uint8 *buff=NULL;
+    CFileOut fo;
+
+    check_para();
+    buff=new Uint8[E2POOM_PARAMSETINGDLG_SAVEBUFF];
+    if(buff==NULL)
+      return;
+
+    float *f_p;
+
+    f_p = (float*)buff;
+    *f_p=paramsetingDlg_col_add_distance;
+    f_p++;
+    *f_p=paramsetingDlg_row_add_distance;
+    f_p++;
+
+
+    fo.WriteFile(E2POOM_PARAMSETINGDLG_SYSPATH_MOTO,buff,E2POOM_PARAMSETINGDLG_SAVEBUFF);
+
+    if(buff!=NULL)
+    {
+      delete []buff;
+      buff=NULL;
+    }
+}
+
+void E2proomData::init_paramsetingDlg_para()
+{
+    paramsetingDlg_col_add_distance=paramsetingDlg_col_add_distance_use;
+    paramsetingDlg_row_add_distance=paramsetingDlg_row_add_distance_use;
 }

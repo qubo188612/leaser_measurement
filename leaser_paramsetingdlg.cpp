@@ -115,6 +115,28 @@ leaser_paramsetingdlg::leaser_paramsetingdlg(my_parameters *mcs,QWidget *parent)
          ui->record->append("请连接相机后再读取相机参数");
      }
   });
+
+  connect(ui->writeTab2Btn,&QPushButton::clicked,[=](){
+     m_mcs->e2proomdata.paramsetingDlg_col_add_distance=ui->tab2tableWidget->item(0,2)->text().toFloat();
+     m_mcs->e2proomdata.paramsetingDlg_row_add_distance=ui->tab2tableWidget->item(1,2)->text().toFloat();
+     m_mcs->e2proomdata.write_paramsetingDlg_para();
+     ui->record->append("设置插值参数成功");
+  });
+
+  connect(ui->initTab2Btn,&QPushButton::clicked,[=](){
+    m_mcs->e2proomdata.init_paramsetingDlg_para();
+    m_mcs->e2proomdata.write_paramsetingDlg_para();
+    ui->tab2tableWidget->item(0,2)->setText(QString::number(m_mcs->e2proomdata.paramsetingDlg_col_add_distance));
+    ui->tab2tableWidget->item(1,2)->setText(QString::number(m_mcs->e2proomdata.paramsetingDlg_row_add_distance));
+    ui->record->append("重置插值参数成功");
+  });
+
+  connect(ui->readTab1Btn,&QPushButton::clicked,[=](){
+    m_mcs->e2proomdata.read_paramsetingDlg_para();
+    ui->tab2tableWidget->item(0,2)->setText(QString::number(m_mcs->e2proomdata.paramsetingDlg_col_add_distance));
+    ui->tab2tableWidget->item(1,2)->setText(QString::number(m_mcs->e2proomdata.paramsetingDlg_row_add_distance));
+    ui->record->append("读取插值参数成功");
+  });
 }
 
 leaser_paramsetingdlg::~leaser_paramsetingdlg()
@@ -122,8 +144,9 @@ leaser_paramsetingdlg::~leaser_paramsetingdlg()
   delete ui;
 }
 
-void leaser_paramsetingdlg::Initparam()
+void leaser_paramsetingdlg::Initparam(my_parameters *mcs)
 {
+  m_mcs=mcs;
   if(m_mcs->resultdata.link_param_state==true)
   {
       int real_readnum=1;
@@ -143,3 +166,38 @@ void leaser_paramsetingdlg::Initparam()
       }
   }
 }
+
+void leaser_paramsetingdlg::on_tabWidget_currentChanged(int index)
+{
+    switch(index)
+    {
+      case 0:
+        ui->record->append("相机参数设置");
+        if(m_mcs->resultdata.link_param_state==true)
+        {
+            int real_readnum=1;
+            u_int16_t rcvdata[ALS103_REG_TOTALNUM];
+            real_readnum=modbus_read_registers(m_mcs->resultdata.ctx_param,ALS103_EXPOSURE_TIME_REG_ADD,ALS103_REG_TOTALNUM,rcvdata);
+            if(real_readnum<0)
+            {
+                ui->record->append("读取相机参数失败");
+            }
+            else
+            {
+                for(int i=1;i<ALS103_REG_TOTALNUM;i++)
+                {
+                    ui->tab1tableWidget->item(i-1,2)->setText(QString::number((int16_t)rcvdata[i]));
+                }
+                ui->record->append("读取相机参数成功");
+            }
+        }
+      break;
+      case 1:
+        ui->record->append("插补参数设置");
+        ui->tab2tableWidget->item(0,2)->setText(QString::number(m_mcs->e2proomdata.paramsetingDlg_col_add_distance));
+        ui->tab2tableWidget->item(1,2)->setText(QString::number(m_mcs->e2proomdata.paramsetingDlg_row_add_distance));
+        ui->record->append("读取插补参数成功");
+      break;
+    }
+}
+

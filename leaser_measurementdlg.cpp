@@ -186,7 +186,7 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
         if(m_mcs->resultdata.link_param_state==true)
         {
           paramset->setWindowTitle("参数设置");
-          paramset->Initparam();
+          paramset->Initparam(m_mcs);
           paramset->exec();
         }
         else

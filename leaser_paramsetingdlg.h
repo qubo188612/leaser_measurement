@@ -18,7 +18,10 @@ public:
 
   my_parameters *m_mcs;
 
-  void Initparam();      //初始化
+  void Initparam(my_parameters *mcs);      //初始化
+
+private slots:
+  void on_tabWidget_currentChanged(int index);
 
 private:
   Ui::leaser_paramsetingdlg *ui;
