@@ -75,12 +75,12 @@
     <item>
      <widget class="QPushButton" name="saveshowBtn">
       <property name="text">
-       <string>保存</string>
+       <string>保存结果</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="paramsetBtn">
       <property name="text">
        <string>参数设置</string>
       </property>

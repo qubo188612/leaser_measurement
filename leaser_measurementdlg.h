@@ -9,6 +9,7 @@
     #include <QtCore5Compat/QTextCodec>
 #endif
 #include <leaser_showpointdlg.h>
+#include <leaser_paramsetingdlg.h>
 #include <my_parameters.h>
 #include "rclcpp/rclcpp.hpp"
 #include <QThread>
@@ -50,8 +51,8 @@ public:
     bool stop_b_imgshow_thread;  //是否成功断开线程
 
     bool u8_save_imgdata;     //保存图像
-    void save_imgdata_cvimage(cv::Mat cv_image);  //保存opencv类型图
-    void save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);                //保存点云
+    QString save_imgdata_cvimage(cv::Mat cv_image);  //保存opencv类型图
+    QString save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);                //保存点云
 
     void start_deepimg();         //开始采集深度图
 
@@ -61,9 +62,12 @@ public:
 
     volatile bool b_init_show_pclclould_list_finish;          //init_show_pclclould_list信号曹空闲
 
+    volatile bool b_int_show_record_finish;
+
 private:
 
     leaser_showpointdlg *showpoint;
+    leaser_paramsetingdlg *paramset;
 
     ImgWindowShowThread *imgshow_thread;
 
@@ -82,8 +86,8 @@ private slots:
 
     void int_show_cvimage_inlab(cv::Mat cv_image);        //在windowshowlib中显示cv_image
     void init_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);      //在QVTKWidgetlib中显示点云
+    void int_show_record(QString msg);
     void slot_timer_tragetor_clould();      //轨迹进入点云的定时器中断函数
-
 };
 
 class ImgWindowShowThread : public QThread
@@ -99,6 +103,7 @@ private:
 
 signals:
     // 自定义信号
+    void Send_show_record(QString msg);
     void Send_show_cvimage_inlab(cv::Mat cv_image);       //发送图像显示信号
     void Send_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);      //发送点云显示信号
 };

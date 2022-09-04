@@ -20,6 +20,7 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     pImage=cv::Mat::zeros(CAMIMAGE_HEIGHT,CAMIMAGE_WIDTH,CV_8UC1);
 
     showpoint=new leaser_showpointdlg;
+    paramset=new leaser_paramsetingdlg(m_mcs);
 
     ui->setupUi(this);
     InitSetEdit();
@@ -38,9 +39,10 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
     imgshow_thread = new ImgWindowShowThread(this);
     b_int_show_cvimage_inlab_finish=true;
     b_init_show_pclclould_list_finish=true;
+    b_int_show_record_finish=true;
     connect(imgshow_thread, SIGNAL(Send_show_cvimage_inlab(cv::Mat)), this, SLOT(int_show_cvimage_inlab(cv::Mat)));
     connect(imgshow_thread, SIGNAL(Send_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr)), this, SLOT(init_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr)));
-
+    connect(imgshow_thread, SIGNAL(Send_show_record(QString)), this, SLOT(int_show_record(QString)));
     b_imgshow_thread=true;
     imgshow_thread->start();
 
@@ -110,6 +112,7 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
           m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
         }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=0;
+        ui->record->append("切换为显示原图模式");
         UpdataUi();
     });
 
@@ -121,6 +124,7 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
           m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
         }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=1;
+        ui->record->append("切换为显示轮廓模式");
         UpdataUi();
     });
 
@@ -132,6 +136,7 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
           m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
         }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=2;
+        ui->record->append("切换为显示轨迹模式");
         UpdataUi();
         m_mcs->resultdata.viewer->removeAllPointClouds();
         m_mcs->resultdata.viewer->removeAllShapes();
@@ -145,6 +150,7 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
           m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
         }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=3;
+        ui->record->append("切换为显示深度图模式");
         UpdataUi();
     });
 
@@ -156,6 +162,7 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
           m_mcs->cam->sop_cam[0].InitConnect(ui->windowshowlib);
         }
         m_mcs->e2proomdata.measurementDlg_leaser_data_mod=4;
+        ui->record->append("切换为显示点云图模式");
         UpdataUi();
     });
 
@@ -171,6 +178,20 @@ leaser_measurementDlg::leaser_measurementDlg(QWidget *parent) :
         #else
 
         #endif
+            ui->record->append("正在采集数据......");
+        }
+    });
+
+    connect(ui->paramsetBtn,&QPushButton::clicked,[=](){
+        if(m_mcs->resultdata.link_param_state==true)
+        {
+          paramset->setWindowTitle("参数设置");
+          paramset->Initparam();
+          paramset->exec();
+        }
+        else
+        {
+          ui->record->append("请先连接传感器再进行参数设置");
         }
     });
 }
@@ -196,6 +217,7 @@ leaser_measurementDlg::~leaser_measurementDlg()
     }
     delete timer_tragetor_clould;
     delete showpoint;
+    delete paramset;
     delete ui;
 }
 
@@ -212,6 +234,26 @@ void leaser_measurementDlg::InitSetEdit()
     ui->deepimg_Edit_1->setText(QString::number(m_mcs->e2proomdata.measurementDlg_deepimg_distance));
     ui->deepimg_Edit_2->setText(QString::number(m_mcs->e2proomdata.measurementDlg_deepimg_speed));
     ui->deepimg_Edit_3->setText(QString::number(m_mcs->e2proomdata.measurementDlg_deepimg_pisdis));
+
+    ui->record->document()->setMaximumBlockCount(500);   //调试窗最大设置行数
+    switch(m_mcs->e2proomdata.measurementDlg_leaser_data_mod)
+    {
+      case 0:
+        ui->record->append("当前在显示原图模式");
+      break;
+      case 1:
+        ui->record->append("当前在显示轮廓模式");
+      break;
+      case 2:
+        ui->record->append("当前在显示轨迹模式");
+      break;
+      case 3:
+        ui->record->append("当前在显示深度模式");
+      break;
+      case 4:
+        ui->record->append("当前在显示点云模式");
+      break;
+    }
 }
 
 
@@ -353,15 +395,10 @@ void leaser_measurementDlg::showupdata_tabWidget()
             ui->exposureEdit->setText(QString::number(m_mcs->cam->sop_cam[0].i32_exposure));
             /*******************/
             //这里添加其他设置参数显示
-
-
-
-
-
             /*******************/
             ui->record->append("读取参数成功");
         }
-     }
+    }
 }
 
 
@@ -449,7 +486,7 @@ void leaser_measurementDlg::start_deepimg()
     m_mcs->resultdata.b_deepimg_pushoneline=true;
 }
 
-void leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
+QString leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
 {
     QString dir="./DATA/";
     QString time;
@@ -479,9 +516,10 @@ void leaser_measurementDlg::save_imgdata_cvimage(cv::Mat cv_image)
     }
     dir=dir+time+format;
     cv::imwrite(dir.toStdString(),cv_image);
+    return dir;
 }
 
-void leaser_measurementDlg::save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould)
+QString leaser_measurementDlg::save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould)
 {
     pcl::PointCloud<pcl::PointXYZ>::Ptr saveclould(new pcl::PointCloud<pcl::PointXYZ>);
     QString dir="./DATA/";
@@ -492,6 +530,7 @@ void leaser_measurementDlg::save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZ
     dir=dir+time+format;
     pcl::copyPointCloud(*pclclould,*saveclould);//点云转换
     pcl::io::savePCDFile(dir.toStdString(),*saveclould);
+    return dir;
 }
 
 void leaser_measurementDlg::slot_timer_tragetor_clould()
@@ -522,6 +561,12 @@ void leaser_measurementDlg::int_show_cvimage_inlab(cv::Mat cv_image)
     img = img.scaled(ui->windowshowlib->width(),ui->windowshowlib->height(),Qt::IgnoreAspectRatio, Qt::SmoothTransformation);//图片自适应lab大小
     ui->windowshowlib->setPixmap(QPixmap::fromImage(img));
     b_int_show_cvimage_inlab_finish=true;
+}
+
+void leaser_measurementDlg::int_show_record(QString msg)
+{
+    ui->record->append(msg);
+    b_int_show_record_finish=true;
 }
 
 void leaser_measurementDlg::init_show_pclclould_list(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould)
@@ -576,8 +621,16 @@ void ImgWindowShowThread::run()
                    }
                    if(_p->u8_save_imgdata==1)//保存结果
                    {
-                       _p->save_imgdata_cvimage(_p->pImage);
+                       QString str=_p->save_imgdata_cvimage(_p->pImage);
                        _p->u8_save_imgdata=0;
+                       if(_p->b_int_show_record_finish==true)
+                       {
+                         _p->b_int_show_record_finish=false;
+                         qRegisterMetaType< QString >("QString");
+                         QString strname="数据保存在:";
+                         strname=strname+str;
+                         emit Send_show_record(strname);
+                       }
                    }
                 }
                 break;
@@ -613,8 +666,16 @@ void ImgWindowShowThread::run()
                    }
                    if(_p->u8_save_imgdata==1)//保存结果
                    {
-                       _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_imagelinecenter);
+                       QString str=_p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_imagelinecenter);
                        _p->u8_save_imgdata=0;
+                       if(_p->b_int_show_record_finish==true)
+                       {
+                         _p->b_int_show_record_finish=false;
+                         qRegisterMetaType< QString >("QString");
+                         QString strname="数据保存在:";
+                         strname=strname+str;
+                         emit Send_show_record(strname);
+                       }
                    }
                 }
                 break;
@@ -637,8 +698,16 @@ void ImgWindowShowThread::run()
                    }
                    if(_p->u8_save_imgdata==1)//保存结果
                    {
-                      _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                      QString str=_p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_lineclould);
                       _p->u8_save_imgdata=0;
+                      if(_p->b_int_show_record_finish==true)
+                      {
+                        _p->b_int_show_record_finish=false;
+                        qRegisterMetaType< QString >("QString");
+                        QString strname="数据保存在:";
+                        strname=strname+str;
+                        emit Send_show_record(strname);
+                      }
                    }
                 }
                 break;
@@ -683,6 +752,12 @@ void ImgWindowShowThread::run()
                        /**************************/
 
                        _p->pclclass.pointCloud2imgI(&_p->m_mcs->resultdata.ptr_pcl_lineclould,&_p->m_mcs->resultdata.cv_deepimg,_p->m_mcs->e2proomdata.measurementDlg_deepimg_pisdis);
+                       if(_p->b_int_show_record_finish==true)
+                       {
+                         _p->b_int_show_record_finish=false;
+                         qRegisterMetaType< QString >("QString");
+                         emit Send_show_record("完成数据采集");
+                       }
                    }
                    if(_p->b_int_show_cvimage_inlab_finish==true)
                    {
@@ -693,8 +768,16 @@ void ImgWindowShowThread::run()
                    }
                    if(_p->u8_save_imgdata==1)//保存结果
                    {
-                       _p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_deepimg);
+                       QString str=_p->save_imgdata_cvimage(_p->m_mcs->resultdata.cv_deepimg);
                        _p->u8_save_imgdata=0;
+                       if(_p->b_int_show_record_finish==true)
+                       {
+                         _p->b_int_show_record_finish=false;
+                         qRegisterMetaType< QString >("QString");
+                         QString strname="数据保存在:";
+                         strname=strname+str;
+                         emit Send_show_record(strname);
+                       }
                    }
                 }
                 break;
@@ -734,6 +817,12 @@ void ImgWindowShowThread::run()
                      {   //采集完成,重新刷新下颜色
                          _p->m_mcs->resultdata.b_deepimg_showclould_finish=false;
                          _p->pclclass.updata_color_pclclould(&_p->m_mcs->resultdata.ptr_pcl_lineclould,&_p->m_mcs->resultdata.ptr_pcl_lineclould);
+                         if(_p->b_int_show_record_finish==true)
+                         {
+                           _p->b_int_show_record_finish=false;
+                           qRegisterMetaType< QString >("QString");
+                           emit Send_show_record("完成数据采集");
+                         }
                      }
                      if(_p->b_init_show_pclclould_list_finish==true)
                      {
@@ -743,8 +832,16 @@ void ImgWindowShowThread::run()
                      }
                      if(_p->u8_save_imgdata==1)//保存结果
                      {
-                         _p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_deepclould);
+                         QString str=_p->save_pcldata_pclclould(_p->m_mcs->resultdata.ptr_pcl_deepclould);
                          _p->u8_save_imgdata=0;
+                         if(_p->b_int_show_record_finish==true)
+                         {
+                           _p->b_int_show_record_finish=false;
+                           qRegisterMetaType< QString >("QString");
+                           QString strname="数据保存在:";
+                           strname=strname+str;
+                           emit Send_show_record(strname);
+                         }
                      }
                 }
                 break;

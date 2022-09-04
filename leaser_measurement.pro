@@ -19,6 +19,7 @@ SOURCES += \
         TimeFunction.cpp \
         cam_sen.cpp \
         leaser_measurementdlg.cpp \
+        leaser_paramsetingdlg.cpp \
         leaser_showpointdlg.cpp \
         main.cpp \
         my_parameters.cpp \
@@ -31,6 +32,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 FORMS += \
     leaser_measurementdlg.ui \
+    leaser_paramsetingdlg.ui \
     leaser_showpointdlg.ui
 
 HEADERS += \
@@ -42,6 +44,7 @@ HEADERS += \
     cam_sen.h \
     global.h \
     leaser_measurementdlg.h \
+    leaser_paramsetingdlg.h \
     leaser_showpointdlg.h \
     my_parameters.h \
     soptopcamera.h \
