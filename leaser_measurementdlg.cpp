@@ -745,10 +745,12 @@ void ImgWindowShowThread::run()
 
                        /**************************/
                        //测试
+                       /*
                        pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
                        pcl::io::loadPCDFile("/home/qubo/suanfabmp/dianyun/1.pcd", *pointCloud);
                        pcl::PointCloud<pcl::PointXYZRGB>::Ptr rgbclould(new pcl::PointCloud<pcl::PointXYZRGB>);
                        pcl::copyPointCloud(*pointCloud,*_p->m_mcs->resultdata.ptr_pcl_lineclould);//点云转换
+                       */
                        /**************************/
 
                        _p->pclclass.pointCloud2imgI(&_p->m_mcs->resultdata.ptr_pcl_lineclould,&_p->m_mcs->resultdata.cv_deepimg,_p->m_mcs->e2proomdata.measurementDlg_deepimg_pisdis);
