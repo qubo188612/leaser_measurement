@@ -241,3 +241,228 @@ void MyPlcFunction::pointCloud2imgI(pcl::PointCloud<pcl::PointXYZRGB>::Ptr *poin
     }
   }
 }
+
+Int8 MyPlcFunction::Myfixfdata(float *dataIn_Out,Uint8 *mask,Int32 num)
+{
+    Int32 n,m;
+    Int32 nST,nED;
+    Int32 *u32_data=new Int32[num];
+    Int32 seed=0;
+    Uint8 nTemp=0;
+    Int32 addnum;
+    float add;
+    Int32 t;
+    Uint8 have=0;
+
+    memset(u32_data,0,num*sizeof(Int32));
+    for(n=0;n<num;n++)
+    {
+        if(mask[n]==1)
+        {
+            have=1;
+            break;
+        }
+    }
+    if(have==0)
+    {
+        delete[] u32_data;
+        return 1;
+    }
+    for(n=0;n<num;n++)
+    {
+        if(mask[n]==0&&nTemp==0)
+        {
+            nTemp=1;
+            u32_data[seed++]=n;
+        }
+        else if(mask[n]!=0&&nTemp==1)
+        {
+            nTemp=0;
+            u32_data[seed++]=n;
+        }
+    }
+    if(nTemp==1)
+    {
+        u32_data[seed++]=num;
+    }
+    for(n=0;n<seed;n=n+2)
+    {
+        nST=u32_data[n];
+        nED=u32_data[n+1];
+        addnum=(nED-nST)+1;
+        if(nST==0)
+        {
+            for(m=nST;m<nED;m++)
+            {
+                dataIn_Out[m]=dataIn_Out[nED];
+            }
+        }
+        else if(nED==num)
+        {
+            for(m=nST;m<nED;m++)
+            {
+                dataIn_Out[m]=dataIn_Out[nST-1];
+            }
+        }
+        else
+        {
+            t=1;
+            add=(dataIn_Out[nED]-dataIn_Out[nST-1])/addnum;
+            for(m=nST;m<nED;m++)
+            {
+                dataIn_Out[m]=dataIn_Out[nST-1]+((add*t));
+                t++;
+            }
+        }
+    }
+    delete[] u32_data;
+    return 0;
+}
+
+void MyPlcFunction::addpoint_image(cv::Mat *f8_deepimg,int coldis,int rowdis)
+{
+  if(coldis>0)
+  {
+    int cols=(*f8_deepimg).cols;
+    int rows=(*f8_deepimg).rows;
+    Uint8 *mark=new Uint8 [cols];
+    memset(mark,1,cols);
+    for(int j=0;j<rows;j++)
+    {
+      float * data = (*f8_deepimg).ptr<float>(j);
+      int st,ed;
+      bool have=0;
+      for (int i = 0; i < cols; i++)
+      {
+         if(data[i]==CLOULD_POINT_NOTDATE)
+         {
+           mark[i]=0;
+         }
+      }
+      for (int i = 0; i < cols; i++)
+      {
+         if(data[i]==CLOULD_POINT_NOTDATE)
+         {
+           mark[i]=1;
+         }
+         else
+         {
+           break;
+         }
+      }
+      for (int i = cols - 1; i >= 0 ; i--)
+      {
+         if(data[i]==CLOULD_POINT_NOTDATE)
+         {
+           mark[i]=1;
+         }
+         else
+         {
+           break;
+         }
+      }
+
+      for (int i = 0; i < cols; i++)
+      {
+         if(mark[i]==0)
+         {
+           if(have==0)
+           {
+             st=i;
+             have=1;
+           }
+         }
+         else
+         {
+           if(have==1)
+           {
+             ed=i;
+             if(ed-st>coldis)
+             {
+               for(int n=st;n<ed;n++)
+               {
+                 mark[n]=1;
+               }
+             }
+           }
+           have=0;
+         }
+      }
+      Myfixfdata(data,mark,cols);
+    }
+    delete[] mark;
+  }
+  if(rowdis>0)
+  {
+    cv::rotate(*f8_deepimg, *f8_deepimg, cv::ROTATE_90_CLOCKWISE);
+    int cols=(*f8_deepimg).cols;
+    int rows=(*f8_deepimg).rows;
+    Uint8 *mark=new Uint8 [cols];
+    memset(mark,1,cols);
+    for(int j=0;j<rows;j++)
+    {
+      float * data = (*f8_deepimg).ptr<float>(j);
+      int st,ed;
+      bool have=0;
+      for (int i = 0; i < cols; i++)
+      {
+         if(data[i]==CLOULD_POINT_NOTDATE)
+         {
+           mark[i]=0;
+         }
+      }
+      for (int i = 0; i < cols; i++)
+      {
+         if(data[i]==CLOULD_POINT_NOTDATE)
+         {
+           mark[i]=1;
+         }
+         else
+         {
+           break;
+         }
+      }
+      for (int i = cols - 1; i >= 0 ; i--)
+      {
+         if(data[i]==CLOULD_POINT_NOTDATE)
+         {
+           mark[i]=1;
+         }
+         else
+         {
+           break;
+         }
+      }
+
+      for (int i = 0; i < cols; i++)
+      {
+         if(mark[i]==0)
+         {
+           if(have==0)
+           {
+             st=i;
+             have=1;
+           }
+         }
+         else
+         {
+           if(have==1)
+           {
+             ed=i;
+             if(ed-st>rowdis)
+             {
+               for(int n=st;n<ed;n++)
+               {
+                 mark[n]=1;
+               }
+             }
+           }
+           have=0;
+         }
+      }
+      Myfixfdata(data,mark,cols);
+    }
+    delete[] mark;
+  }
+  cv::rotate(*f8_deepimg, *f8_deepimg, cv::ROTATE_90_COUNTERCLOCKWISE);
+}

@@ -752,6 +752,9 @@ void ImgWindowShowThread::run()
                        /**************************/
 
                        _p->pclclass.pointCloud2imgI(&_p->m_mcs->resultdata.ptr_pcl_lineclould,&_p->m_mcs->resultdata.cv_deepimg,_p->m_mcs->e2proomdata.measurementDlg_deepimg_pisdis);
+                       _p->pclclass.addpoint_image(&_p->m_mcs->resultdata.cv_deepimg,
+                                                   (int)(_p->m_mcs->e2proomdata.paramsetingDlg_col_add_distance/_p->m_mcs->e2proomdata.measurementDlg_deepimg_pisdis+0.5),
+                                                   (int)(_p->m_mcs->e2proomdata.paramsetingDlg_row_add_distance/_p->m_mcs->e2proomdata.measurementDlg_deepimg_pisdis+0.5));
                        if(_p->b_int_show_record_finish==true)
                        {
                          _p->b_int_show_record_finish=false;
