@@ -14,6 +14,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include <QThread>
 #include <QLabel>
+#include <QMutex>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/io.h>
@@ -21,6 +22,7 @@
 #include <dirent.h>
 #include "TimeFunction.h"
 #include "MyPlcFunction.h"
+#include "QMutex"
 
 namespace Ui {
 class leaser_measurementDlg;
@@ -55,8 +57,7 @@ public:
     QString save_pcldata_pclclould(pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclclould);                //保存点云
 
     void start_deepimg();         //开始采集深度图
-
-    void start_clould();          //开始采集点云
+    void stop_deepimg();          //停止采集深度
 
     volatile bool b_int_show_cvimage_inlab_finish;          //int_show_cvimage_inlab信号曹空闲
 
@@ -96,11 +97,13 @@ class ImgWindowShowThread : public QThread
 public:
     ImgWindowShowThread(leaser_measurementDlg *statci_p);
     void Stop();
+    void Lock();
+    void unLock();
 protected:
     void run();
 private:
     leaser_measurementDlg *_p;
-
+    bool lock;
 signals:
     // 自定义信号
     void Send_show_record(QString msg);

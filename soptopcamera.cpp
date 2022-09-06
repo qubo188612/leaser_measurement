@@ -29,6 +29,7 @@ void Camshow::topic_callback(const sensor_msgs::msg::Image msg)  const
     cv_ptr = cv_bridge::toCvCopy(msg, msg.encoding);
     *(_p->cv_image)=cv_ptr->image.clone();
     _p->b_updataimage_finish=true;
+    _p->callbacknumber++;
   }
   else
   {
@@ -96,6 +97,7 @@ void Cloudshow::cloud_callback(const tutorial_interfaces::msg::IfAlgorhmitcloud 
       _p->b_cv_lineEn=false;
     }
     _p->b_updatacloud_finish=true;
+    _p->callbacknumber++;
   }
   else
   {
@@ -120,6 +122,9 @@ SoptopCamera::SoptopCamera()
   b_updataimage_finish=false;
   b_updatacloud_finish=false;
   node_mode=0;
+  callbacknumber=0;
+  oldcallbacknumber=0;
+  callback_error=0;
   b_stopthred=true;
   StartCamera_thread = new StartCameraThread(this);
 }
@@ -132,6 +137,25 @@ SoptopCamera::~SoptopCamera()
   StartCamera_thread=NULL;
   delete cv_image;
   delete cv_line;
+}
+
+void SoptopCamera::timerEvent(QTimerEvent *event)
+{
+    if(event->timerId()==timerid1)
+    {
+        if(b_connect==true||stop_b_connect==false)
+        {
+            if(callbacknumber==oldcallbacknumber)
+            {
+                callback_error=1;
+            }
+            else
+            {
+                callback_error=0;
+            }
+            oldcallbacknumber=callbacknumber;
+        }
+    }
 }
 
 void SoptopCamera::read_para()
@@ -193,6 +217,9 @@ void SoptopCamera::InitConnect(QLabel *lab_show)
 {
   if(b_connect==false)
   {
+    callbacknumber=0;
+    oldcallbacknumber=0;
+    timerid1 = startTimer(1000);
     m_lab_show=lab_show;
     b_connect=true;
     StartCamera_thread->start();
@@ -208,7 +235,14 @@ void SoptopCamera::DisConnect()
     while (stop_b_connect==false||b_stopthred==false)
     {
       QThread::sleep(0);
+      if(callback_error==1)//相机卡住了，强制退出ROS
+      {
+          rclcpp::shutdown();
+          stop_b_connect=true;
+          break;
+      }
     }
+    killTimer(timerid1);
   }
 }
 
