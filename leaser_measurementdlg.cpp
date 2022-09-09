@@ -276,6 +276,7 @@ void leaser_measurementDlg::img_windowshow(bool b_show,QLabel *lab_show)
 {
     if(b_show==true)
     {
+    #ifndef ONLY_TEST_CAMER
         if(m_mcs->resultdata.link_result_state==false)
         {
             QString server_ip=ui->IPadd->text();
@@ -325,11 +326,13 @@ void leaser_measurementDlg::img_windowshow(bool b_show,QLabel *lab_show)
         {
           m_mcs->cam->sop_cam[0].node_mode=1;
         }
+   #endif
         m_mcs->cam->sop_cam[0].InitConnect(lab_show);
     }
     else
     {
         m_mcs->cam->sop_cam[0].DisConnect();
+    #ifndef ONLY_TEST_CAMER
         if(m_mcs->resultdata.link_result_state==true)
         {
             close_camer_modbus();
@@ -343,6 +346,7 @@ void leaser_measurementDlg::img_windowshow(bool b_show,QLabel *lab_show)
             m_mcs->resultdata.link_param_state=false;
             ui->record->append("参数端口关闭");
         }
+    #endif
     }
 }
 

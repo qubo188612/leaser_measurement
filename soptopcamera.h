@@ -15,6 +15,7 @@
 #include <QLabel>
 #include "FileOut.h"
 #include <QTimerEvent>
+#include "global.h"
 
 #define SOPTOPCAM_SAVEBUFF		32
 #define SOPTOPCAM_SYSPATH_MOTO	"./SAVE/SOPTOPCAM.bsd"

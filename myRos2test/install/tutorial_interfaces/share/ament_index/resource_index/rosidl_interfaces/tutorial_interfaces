@@ -1,0 +1,16 @@
+msg/IfAlgorhmitcloud.idl
+msg/IfAlgorhmitcloud.msg
+msg/IfAlgorhmitmsg.idl
+msg/IfAlgorhmitmsg.msg
+msg/IfAlgorhmitpoint2f.idl
+msg/IfAlgorhmitpoint2f.msg
+msg/IfAlgorhmitpoint4f.idl
+msg/IfAlgorhmitpoint4f.msg
+msg/IfAlgorhmittargetpoint2f.idl
+msg/IfAlgorhmittargetpoint2f.msg
+msg/IfAlgorhmittargetpoint4f.idl
+msg/IfAlgorhmittargetpoint4f.msg
+srv/IfAlgorhmit.idl
+srv/IfAlgorhmit.srv
+srv/IfAlgorhmit_Request.msg
+srv/IfAlgorhmit_Response.msg

@@ -1,0 +1,34 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from tutorial_interfaces/srv/IfAlgorhmit.srv
+// generated code does not contain a copyright notice
+
+#include "sensor_msgs/msg/Image.idl"
+#include "tutorial_interfaces/msg/IfAlgorhmitpoint2f.idl"
+#include "tutorial_interfaces/msg/IfAlgorhmittargetpoint2f.idl"
+
+module tutorial_interfaces {
+  module srv {
+    struct IfAlgorhmit_Request {
+      @verbatim (language="comment", text=
+        "输入图像")
+      sensor_msgs::msg::Image imagein;
+    };
+    struct IfAlgorhmit_Response {
+      @verbatim (language="comment", text=
+        "是否检测成功")
+      boolean result;
+
+      @verbatim (language="comment", text=
+        "输出结果图像")
+      sensor_msgs::msg::Image imageout;
+
+      @verbatim (language="comment", text=
+        "目标点")
+      sequence<tutorial_interfaces::msg::IfAlgorhmittargetpoint2f> targetpointout;
+
+      @verbatim (language="comment", text=
+        "激光轨迹")
+      sequence<tutorial_interfaces::msg::IfAlgorhmitpoint2f> lasertrackout;
+    };
+  };
+};

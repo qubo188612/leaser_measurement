@@ -3,10 +3,11 @@
 Camshow::Camshow(SoptopCamera *statci_p): Node("my_eyes")
 {
   _p=statci_p;
-
-//system("ros2 param set gpio_raspberry_node laser True");  //激光打开
-//system("ros2 param set /camera_tis_node power True");     //相机打开
-//_p->updata_parameter();                                   //应用相机参数
+#ifdef ONLY_TEST_CAMER
+  system("ros2 param set gpio_raspberry_node laser True");  //激光打开
+  system("ros2 param set /camera_tis_node power True");     //相机打开
+  _p->updata_parameter();                                   //应用相机参数
+#endif
 
   subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
         "camera_tis_node/image", rclcpp::SensorDataQoS(), std::bind(&Camshow::topic_callback, this, _1));

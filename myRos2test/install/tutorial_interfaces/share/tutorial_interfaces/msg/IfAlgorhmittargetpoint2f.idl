@@ -1,0 +1,22 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from tutorial_interfaces/msg/IfAlgorhmittargetpoint2f.msg
+// generated code does not contain a copyright notice
+
+
+module tutorial_interfaces {
+  module msg {
+    struct IfAlgorhmittargetpoint2f {
+      @verbatim (language="comment", text=
+        "目标点x坐标")
+      float x;
+
+      @verbatim (language="comment", text=
+        "目标点y坐标")
+      float y;
+
+      @verbatim (language="comment", text=
+        "目标点名称(属性)")
+      string name;
+    };
+  };
+};

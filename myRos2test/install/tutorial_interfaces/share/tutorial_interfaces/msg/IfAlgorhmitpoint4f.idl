@@ -1,0 +1,26 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from tutorial_interfaces/msg/IfAlgorhmitpoint4f.msg
+// generated code does not contain a copyright notice
+
+
+module tutorial_interfaces {
+  module msg {
+    struct IfAlgorhmitpoint4f {
+      @verbatim (language="comment", text=
+        " 表示目标的X坐标")
+      float x;
+
+      @verbatim (language="comment", text=
+        " 表示目标的Y坐标")
+      float y;
+
+      @verbatim (language="comment", text=
+        " 表示原图u坐标")
+      int32 u;
+
+      @verbatim (language="comment", text=
+        " 表示原图v坐标")
+      int32 v;
+    };
+  };
+};
