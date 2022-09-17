@@ -2,7 +2,7 @@ FROM qubo188612/ubuntu20.04:opencvrosqtpclmodbus AS run
 
 COPY ./myRos2test/install /workspace/myRos2test/install
 COPY ./build-leaser_measurement-Replacement_for_Desktop_Qt_5_12_12_GCC_64bit-Release /workspace/leaser
-
+    
 RUN sudo chmod -R 777 /workspace/leaser
 
 WORKDIR /workspace/leaser

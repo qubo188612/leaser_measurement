@@ -8,7 +8,20 @@ Camshow::Camshow(SoptopCamera *statci_p): Node("my_eyes")
   system("ros2 param set /camera_tis_node power True");     //相机打开
   _p->updata_parameter();                                   //应用相机参数
 #endif
-
+/*
+  auto stamp = this->now();
+  time_t t;
+  int t2;
+  double t3;
+  struct tm *p;
+  t=stamp.seconds();
+  t2=stamp.nanoseconds();
+  t3=stamp.nanoseconds();
+  t2=t2/1000000.0;
+  p=gmtime(&t);
+  char s[100];
+  sprintf(s, "%d-%d-%d %d:%d:%d", 1900+p->tm_year,1+p->tm_mon,p->tm_mday,(p->tm_hour+8)%24,p->tm_min,p->tm_sec);
+*/
   subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
         "camera_tis_node/image", rclcpp::SensorDataQoS(), std::bind(&Camshow::topic_callback, this, _1));
 
