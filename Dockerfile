@@ -20,4 +20,4 @@ WORKDIR /workspace/leaser
 
 RUN sed -i '$c source /workspace/myRos2test/install/local_setup.sh' /home/linuxbrew/.bashrc
 
-CMD <./workspace/leaser/leaser_measurement>
+CMD <./leaser_measurement>
