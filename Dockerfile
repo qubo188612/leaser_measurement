@@ -1,5 +1,5 @@
 FROM qubo188612/ubuntu20.04:opencv4.2 AS opencv
-FROM qubo188612/ubuntu20.04:opencvrosqtpcl AS run
+FROM qubo188612/ubuntu20.04:opencvrosqtpclmodbus AS run
 
 COPY --from=opencv /opt/opencv4.2 /lib/x86_64-linux-gnu
 
@@ -9,7 +9,6 @@ COPY ./build-leaser_measurement-Replacement_for_Desktop_Qt_5_12_12_GCC_64bit-Rel
 RUN sudo apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && sudo apt-get -y install --no-install-recommends  \
     fonts-noto-cjk \
-    qt5* \
     libtbb2 \
     libopenexr-dev \
     libgdcm-tools \
