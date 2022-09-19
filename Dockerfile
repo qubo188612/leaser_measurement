@@ -14,6 +14,7 @@ RUN sudo apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libopenexr-dev \
     libgdcm-tools \
     libgdal-dev \
+    libavcodec-dev \
     && sudo rm -rf /var/lib/apt/lists/*
     
 RUN sudo chmod -R 777 /workspace/leaser
