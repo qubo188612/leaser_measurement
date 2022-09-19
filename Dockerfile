@@ -8,12 +8,10 @@ COPY ./build-leaser_measurement-Replacement_for_Desktop_Qt_5_12_12_GCC_64bit-Rel
 
 RUN sudo apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && sudo apt-get -y install --no-install-recommends  \
-    fonts-noto-cjk \
     libtbb2 \
     libopenexr-dev \
     libgdcm-tools \
     libgdal-dev \
-    libavcodec-dev \
     && sudo rm -rf /var/lib/apt/lists/*
     
 RUN sudo chmod -R 777 /workspace/leaser
@@ -22,4 +20,4 @@ WORKDIR /workspace/leaser
 
 RUN sed -i '$c source /workspace/myRos2test/install/local_setup.sh' /home/linuxbrew/.bashrc
 
-CMD [ "/workspace/leaser/leaser_measurement" ]
+CMD <./workspace/leaser/leaser_measurement>
