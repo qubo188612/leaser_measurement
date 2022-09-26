@@ -1,23 +1,13 @@
-FROM qubo188612/ubuntu20.04:opencv4.2 AS opencv
-FROM qubo188612/ubuntu20.04:opencvrosqtpclmodbus AS run
+FROM qubo188612/ubuntu20.04:latest AS latest
 
-COPY --from=opencv /opt/opencv4.2 /lib/x86_64-linux-gnu
+COPY ./leaser_measurementexe /workspace/leaser
 
-COPY ./myRos2test/install /workspace/myRos2test/install
-COPY ./build-leaser_measurement-Replacement_for_Desktop_Qt_5_12_12_GCC_64bit-Release /workspace/leaser
-
-RUN sudo apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && sudo apt-get -y install --no-install-recommends  \
-    libtbb2 \
-    libopenexr-dev \
-    libgdcm-tools \
-    libgdal-dev \
-    && sudo rm -rf /var/lib/apt/lists/*
+RUN sudo apt-get update  \
+    && sudo apt-get -y install libopenni-dev \
+    && sudo rm -rf /var/lib/apt/lists/* 
     
 RUN sudo chmod -R 777 /workspace/leaser
 
 WORKDIR /workspace/leaser
 
-RUN sed -i '$c source /workspace/myRos2test/install/local_setup.sh' /home/linuxbrew/.bashrc
-
-CMD <./leaser_measurement>
+CMD ["/workspace/leaser/leaser_measurement.sh"]
