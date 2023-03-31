@@ -10,8 +10,8 @@ defaults:
 
 # For more details, see https://github.com/docker/build-push-action
 jobs:
-  runtime:
-    name: Runtime
+  leaser:
+    name: Leaser
     runs-on: ubuntu-20.04
     steps:
       -
@@ -30,7 +30,7 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v2
         with:
-          target: run
+          target: leaser
           platforms: linux/amd64
           push: true
           tags: qubo188612/ubuntu20.04:leaser

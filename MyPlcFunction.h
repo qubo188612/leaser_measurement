@@ -12,7 +12,6 @@
 #include <pcl/visualization/common/float_image_utils.h>
 #include <pcl/io/png_io.h>
 #include <opencv2/opencv.hpp>
-#include "QVTKWidget.h"
 #include <pcl/visualization/range_image_visualizer.h> //深度图像可视化
 #include "tistdtypes.h"
 
