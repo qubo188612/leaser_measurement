@@ -35,9 +35,10 @@
 #define ALS103_JIGUANGLONG_REG_ADD             0x0075
 #define ALS103_JIGUANGKUANDU_REG_ADD           0x0076
 #define ALS103_JIGUANGDUIBIDU_REG_ADD          0x0077
+#define ALS103_LVBOMOD_REG_ADD                 0x0078
 
 //任务号103寄存器总数
-#define ALS103_REG_TOTALNUM                    0x0008
+#define ALS103_REG_TOTALNUM                    0x0009
 //重置任务103参数寄存器
 #define ALS103_INIT_REG_ADD                    0x006f
 
